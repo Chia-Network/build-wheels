@@ -44,6 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
+          name: wheel
           path: ./dist
 
   upload:
@@ -55,6 +56,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
+          name: wheel
           path: ./dist
 
       - name: Install deps
