@@ -11,6 +11,10 @@ on:
 concurrency:
   group: "pycryptodome-${{ github.event.inputs.version }}"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build_wheel:
     runs-on: [macOS, ARM64]
@@ -54,6 +58,11 @@ jobs:
     needs:
       - build_wheel
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheel
+          path: ./dist
+
       - name: Install deps
         run: apk add aws-cli
 
@@ -70,12 +79,6 @@ jobs:
           vault_token: ${{ env.VAULT_TOKEN }}
           role_name: bootstrap
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: ./dist
-
       - name: Upload Wheels
         run: |
-          sleep 10
           aws s3 cp dist/pycryptodome-* s3://download.chia.net/simple/pycryptodome/
