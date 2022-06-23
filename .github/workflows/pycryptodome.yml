@@ -54,11 +54,6 @@ jobs:
     needs:
       - build_wheel
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: ./dist
-
       - name: Install deps
         run: apk add aws-cli
 
@@ -74,6 +69,11 @@ jobs:
           vault_url: ${{ secrets.VAULT_URL }}
           vault_token: ${{ env.VAULT_TOKEN }}
           role_name: bootstrap
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheel
+          path: ./dist
 
       - name: Upload Wheels
         run: |
