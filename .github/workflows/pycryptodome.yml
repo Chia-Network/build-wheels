@@ -77,4 +77,5 @@ jobs:
 
       - name: Upload Wheels
         run: |
+          sleep 10
           aws s3 cp dist/pycryptodome-* s3://download.chia.net/simple/pycryptodome/
