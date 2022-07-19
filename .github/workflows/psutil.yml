@@ -18,12 +18,13 @@ permissions:
 jobs:
   build_wheel:
     runs-on: ${{ matrix.os.runs-on }}
-    matrix:
-      os:
-        - name: macos
-          runs-on: [macOS, arm64]
-        - name: linux
-          runs-on: [linux, arm64]
+    strategy:
+      matrix:
+        os:
+          - name: macos
+            runs-on: [macOS, arm64]
+          - name: linux
+            runs-on: [linux, arm64]
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
