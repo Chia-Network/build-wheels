@@ -88,5 +88,6 @@ jobs:
           role_name: bootstrap
 
       - name: Upload Wheels
+        working-directory: dist
         run: |
-          find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/%'
+          find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/'
