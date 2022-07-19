@@ -1,0 +1,84 @@
+name: "Build psutil Wheels"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
+        default: ""
+
+concurrency:
+  group: "psutil-${{ github.event.inputs.version }}"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build_wheel:
+    runs-on: [macOS, ARM64]
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: "3.9"
+
+      - name: Get source dist
+        run: |
+          python -m venv venv
+          . ./venv/bin/activate
+          pip download --no-deps --no-binary :all: psutil==${{ github.event.inputs.version }}
+
+      - name: Untar
+        run: |
+          tar -xvzf psutil-${{ github.event.inputs.version }}.tar.gz
+
+      - name: Build and test
+        uses: pypa/cibuildwheel@v2.7.0
+        with:
+          package-dir: psutil-${{ github.event.inputs.version }}
+          output-dir: dist
+        env:
+          CIBW_BUILD_VERBOSITY_MACOS: 0
+          CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
+          CIBW_ARCHS_MACOS: arm64
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wheel
+          path: ./dist
+
+#  upload:
+#    runs-on: [k8s-internal]
+#    container:
+#      image: alpine:latest
+#    needs:
+#      - build_wheel
+#    steps:
+#      - uses: actions/download-artifact@v3
+#        with:
+#          name: wheel
+#          path: ./dist
+#
+#      - name: Install deps
+#        run: apk add aws-cli
+#
+#      - name: Vault Login
+#        uses: Chia-Network/actions/vault/login@main
+#        with:
+#          vault_url: ${{ secrets.VAULT_URL }}
+#          role_name: github
+#
+#      - name: Get ephemeral aws credentials
+#        uses: Chia-Network/actions/vault/aws-sts@main
+#        with:
+#          vault_url: ${{ secrets.VAULT_URL }}
+#          vault_token: ${{ env.VAULT_TOKEN }}
+#          role_name: bootstrap
+#
+#      - name: Upload Wheels
+#        run: |
+#          aws s3 cp dist/psutil-* s3://download.chia.net/simple/psutil/
