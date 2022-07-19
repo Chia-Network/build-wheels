@@ -17,7 +17,13 @@ permissions:
 
 jobs:
   build_wheel:
-    runs-on: [macOS, ARM64]
+    runs-on: ${{ matrix.os.runs-on }}
+    matrix:
+      os:
+        - name: macos
+          runs-on: [macOS, arm64]
+        - name: linux
+          runs-on: [linux, arm64]
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -45,6 +51,7 @@ jobs:
           CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
           CIBW_ARCHS_MACOS: arm64
+          CIBW_ARCHS_LINUX: aarch64
 
       - uses: actions/upload-artifact@v3
         with:
