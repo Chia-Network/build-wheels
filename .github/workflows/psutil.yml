@@ -21,8 +21,6 @@ jobs:
     strategy:
       matrix:
         os:
-          - name: macos
-            runs-on: [macOS, arm64]
           - name: linux
             runs-on: [linux, arm64]
     steps:
@@ -50,8 +48,7 @@ jobs:
           output-dir: dist
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
-          CIBW_BUILD: cp37-* cp38-* cp39-* cp310-*
-          CIBW_ARCHS_MACOS: arm64
+          CIBW_BUILD: cp36-*
           CIBW_ARCHS_LINUX: aarch64
 
       - uses: actions/upload-artifact@v3
