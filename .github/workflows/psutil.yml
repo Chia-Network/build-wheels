@@ -1,14 +1,24 @@
 name: "Build psutil Wheels"
 
 on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
   workflow_dispatch:
     inputs:
       version:
         description: "The version to build"
         required: true
-        default: ""
 
 concurrency:
+  # note that this does not work for latest
   group: "psutil-${{ github.event.inputs.version }}"
 
 permissions:
@@ -37,16 +47,17 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip download --no-deps --no-binary :all: psutil==${{ github.event.inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages psutil${{ github.event.inputs.version && format('=={0}', github.event.inputs.version) || '' }}
 
       - name: Untar
         run: |
-          tar -xvzf psutil-${{ github.event.inputs.version }}.tar.gz
+          tar -xvzf packages/psutil-*
+          mv psutil-* source
 
       - name: Build and test
         uses: pypa/cibuildwheel@v2.7.0
         with:
-          package-dir: psutil-${{ github.event.inputs.version }}
+          package-dir: source
           output-dir: dist
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
@@ -88,6 +99,9 @@ jobs:
           role_name: bootstrap
 
       - name: Upload Wheels
+        if: github.event_name == "workflow_dispatch"
         working-directory: dist
         run: |
-          find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/'
+          echo just showing that we're running here, would be uploading to s3
+          # TODO: enable once we think it is properly gated
+          # find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/'
