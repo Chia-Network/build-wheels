@@ -58,12 +58,6 @@ jobs:
           tar -xvzf packages/psutil-*
           mv psutil-* source
 
-      - name: Install pipx
-        if: matrix.os.name == 'linux'
-        run: |
-          # TODO: deal with this...
-          apt install pipx
-
       - name: Build and test
         uses: pypa/cibuildwheel@v2.7.0
         with:
@@ -83,17 +77,11 @@ jobs:
           if-no-files-found: error
 
   upload:
-    runs-on: [k8s-internal]
+    uses: ./.github/workflows/upload.yml
     needs: build_wheel
-    container:
-      image: alpine:latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: ./.github/actions/upload
-        with:
-          package_name: psutil
-          artifact_name: wheel
-          enable: ${{ github.event_name == 'workflow_dispatch' }}
-          vault_url: ${{ secrets.VAULT_URL }}
-          vault_token: ${{ env.VAULT_TOKEN }}
+    with:
+      package_name: psutil
+      enable: github.event_name == 'workflow_dispatch'
+    secrets:
+      vault_url: ${{ secrets.VAULT_URL }}
+      vault_token: ${{ env.VAULT_TOKEN }}
