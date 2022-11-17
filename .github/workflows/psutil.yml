@@ -82,7 +82,7 @@ jobs:
     container:
       image: alpine:latest
     steps:
-      - uses: ./.github/workflows/upload.yml
+      - uses: ./.github/workflows/upload
         with:
           package_name: psutil
           artifact_name: wheel
