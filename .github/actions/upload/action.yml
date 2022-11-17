@@ -28,7 +28,7 @@ runs:
         path: ./dist
 
     - name: Install deps
-      shell: bash
+      shell: sh
       run: apk add aws-cli
 
     - name: Vault Login
@@ -46,7 +46,7 @@ runs:
 
     - name: Upload Wheels
       if: inputs.enable == 'true'
-      shell: bash
+      shell: sh
       working-directory: dist
       run: |
         echo just showing that we're running here, would be uploading to s3
