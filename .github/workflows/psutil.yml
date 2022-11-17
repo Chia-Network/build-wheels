@@ -23,7 +23,6 @@ concurrency:
 
 env:
   default_version: '5.9.1'
-  package_name: psutil
 
 permissions:
   id-token: write
@@ -81,4 +80,4 @@ jobs:
     uses: ./.github/workflows/upload.yml
     needs: build_wheel
     with:
-      package_name: ${{ env.package_name }}
+      package_name: psutil
