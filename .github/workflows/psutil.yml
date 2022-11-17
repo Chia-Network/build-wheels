@@ -76,12 +76,18 @@ jobs:
           path: ./dist
           if-no-files-found: error
 
+      - uses: ./.github/actions/upload
+
   upload:
-    uses: ./.github/workflows/upload.yml
+    runs-on: [k8s-internal]
     needs: build_wheel
-    with:
-      package_name: psutil
-      enable: github.event_name == 'workflow_dispatch'
-    secrets:
-      vault_url: ${{ secrets.VAULT_URL }}
-      vault_token: ${{ env.VAULT_TOKEN }}
+    container:
+      image: alpine:latest
+    steps:
+      - uses: ./.github/workflows/upload.yml
+        with:
+          package_name: psutil
+          artifact_name: wheel
+          enable: github.event_name == 'workflow_dispatch'
+          vault_url: ${{ secrets.VAULT_URL }}
+          vault_token: ${{ env.VAULT_TOKEN }}
