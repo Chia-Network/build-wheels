@@ -19,7 +19,7 @@ on:
 
 concurrency:
   # note that this does not work for latest
-  group: "psutil-${{ github.event.inputs.version }}"
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1]-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
 
 env:
   default_version: '5.9.1'
