@@ -48,7 +48,8 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip download --no-deps --no-binary :all: --dest packages psutil${{ github.event.inputs.version && format('=={0}', github.event.inputs.version) || '' }}
+          # TODO: remove the 5.9.1.  maybe?
+          pip download --no-deps --no-binary :all: --dest packages psutil${{ github.event.inputs.version && format('=={0}', github.event.inputs.version) || '==5.9.1' }}
 
       - name: Untar
         run: |
