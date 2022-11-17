@@ -58,6 +58,12 @@ jobs:
           tar -xvzf packages/psutil-*
           mv psutil-* source
 
+      - name: Install pipx
+        if: matrix.os.name == 'linux'
+        run: |
+          # TODO: deal with this...
+          apt install pipx
+
       - name: Build and test
         uses: pypa/cibuildwheel@v2.7.0
         with:
