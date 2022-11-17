@@ -11,15 +11,16 @@ on:
       package_name:
         required: true
         type: string
-      vault_url:
-        required: true
-        type: string
       vault_token:
         required: true
         type: string
       enable:
         required: true
         type: bool
+    secrets:
+      vault_url:
+        required: true
+        type: string
 
 jobs:
   upload:
@@ -38,13 +39,13 @@ jobs:
       - name: Vault Login
         uses: Chia-Network/actions/vault/login@main
         with:
-          vault_url: ${{ inputs.vault_url }}
+          vault_url: ${{ secrets.vault_url }}
           role_name: github
 
       - name: Get ephemeral aws credentials
         uses: Chia-Network/actions/vault/aws-sts@main
         with:
-          vault_url: ${{ inputs.vault_url }}
+          vault_url: ${{ secrets.vault_url }}
           vault_token: ${{ inputs.vault_token }}
           role_name: bootstrap
 
