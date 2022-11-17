@@ -29,6 +29,7 @@ jobs:
   build_wheel:
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
+      fail-fast: false
       matrix:
         os:
           - name: macos
