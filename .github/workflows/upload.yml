@@ -13,7 +13,7 @@ on:
         type: string
       enable:
         required: true
-        type: bool
+        type: string
     secrets:
       vault_url:
         required: true
@@ -47,7 +47,7 @@ jobs:
           role_name: bootstrap
 
       - name: Upload Wheels
-        if: inputs.enable
+        if: inputs.enable == 'true'
         working-directory: dist
         run: |
           echo just showing that we're running here, would be uploading to s3
