@@ -1,4 +1,4 @@
-name: "Build psutil Wheels"
+name: "Build pycryptodome Wheels"
 
 on:
   push:
