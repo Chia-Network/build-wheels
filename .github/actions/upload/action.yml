@@ -46,6 +46,11 @@ runs:
         vault_token: ${{ env.VAULT_TOKEN }}
         role_name: ${{ inputs.aws_role }}
 
+    - name: List existing wheels
+      shell: sh
+      run: |
+        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/
+
     - name: List new wheels
       shell: sh
       run: |
