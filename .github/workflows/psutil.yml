@@ -99,7 +99,7 @@ jobs:
           role_name: bootstrap
 
       - name: Upload Wheels
-        if: github.event_name == "workflow_dispatch"
+        if: github.event_name == 'workflow_dispatch'
         working-directory: dist
         run: |
           echo just showing that we're running here, would be uploading to s3
