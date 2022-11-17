@@ -53,5 +53,6 @@ runs:
       working-directory: dist
       run: |
         echo just showing that we are running here, would be uploading to s3
+        ls -la dist/${{ inputs.package_name }}-*.whl
         # TODO: enable once we think it is properly gated
         # ls dist/${{ inputs.package_name }}-*.whl | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/${{ inputs.package_name }}/'
