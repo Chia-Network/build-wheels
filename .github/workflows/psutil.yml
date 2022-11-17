@@ -21,6 +21,9 @@ concurrency:
   # note that this does not work for latest
   group: "psutil-${{ github.event.inputs.version }}"
 
+env:
+  default_version: '5.9.1'
+
 permissions:
   id-token: write
   contents: read
@@ -48,8 +51,7 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          # TODO: remove the 5.9.1.  maybe?
-          pip download --no-deps --no-binary :all: --dest packages psutil${{ github.event.inputs.version && format('=={0}', github.event.inputs.version) || '==5.9.1' }}
+          pip download --no-deps --no-binary :all: --dest packages psutil==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
         run: |
