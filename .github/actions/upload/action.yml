@@ -18,9 +18,6 @@ inputs:
   vault_url:
     description: "the vault URL"
     required: true
-  vault_token:
-    description: "the vault token"
-    required: true
 
 runs:
   using: "composite"
@@ -32,7 +29,9 @@ runs:
 
     - name: Install deps
       shell: sh
-      run: apk add aws-cli
+      run: |
+        ( command -v apk && apk add aws-cli ) || true
+        ( command -v apt-get && apt-get update && apt-get install -y awscli ) || true
 
     - name: Vault Login
       uses: Chia-Network/actions/vault/login@main
@@ -44,7 +43,7 @@ runs:
       uses: Chia-Network/actions/vault/aws-sts@main
       with:
         vault_url: ${{ inputs.vault_url }}
-        vault_token: ${{ inputs.vault_token }}
+        vault_token: ${{ env.VAULT_TOKEN }}
         role_name: ${{ inputs.aws_role }}
 
     - name: List Wheels
