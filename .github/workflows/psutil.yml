@@ -76,8 +76,6 @@ jobs:
           path: ./dist
           if-no-files-found: error
 
-      - uses: ./.github/actions/upload
-
   upload:
     runs-on: [k8s-internal]
     needs: build_wheel
