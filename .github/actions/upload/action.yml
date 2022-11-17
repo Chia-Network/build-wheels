@@ -50,7 +50,6 @@ runs:
     - name: Upload Wheels
       if: inputs.enable == 'true'
       shell: sh
-      working-directory: dist
       run: |
         echo just showing that we are running here, would be uploading to s3
         ls -la dist/${{ inputs.package_name }}-*.whl
