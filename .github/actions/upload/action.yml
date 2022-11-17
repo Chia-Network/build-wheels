@@ -46,13 +46,13 @@ runs:
         vault_token: ${{ env.VAULT_TOKEN }}
         role_name: ${{ inputs.aws_role }}
 
-    - name: List Wheels
+    - name: List new wheels
       shell: sh
       run: |
         ls dist/${{ inputs.package_name }}-*.whl > wheel_list
         cat wheel_list | xargs -I % sh -c 'ls -l %'
 
-    - name: Upload Wheels
+    - name: Upload wheels
       if: inputs.dry_run == 'false'
       shell: sh
       run: |
