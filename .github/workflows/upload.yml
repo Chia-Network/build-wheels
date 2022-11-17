@@ -11,14 +11,14 @@ on:
       package_name:
         required: true
         type: string
-      vault_token:
-        required: true
-        type: string
       enable:
         required: true
         type: bool
     secrets:
       vault_url:
+        required: true
+        type: string
+      vault_token:
         required: true
         type: string
 
@@ -46,7 +46,7 @@ jobs:
         uses: Chia-Network/actions/vault/aws-sts@main
         with:
           vault_url: ${{ secrets.vault_url }}
-          vault_token: ${{ inputs.vault_token }}
+          vault_token: ${{ secrets.vault_token }}
           role_name: bootstrap
 
       - name: Upload Wheels
