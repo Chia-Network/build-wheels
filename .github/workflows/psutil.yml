@@ -23,6 +23,7 @@ concurrency:
 
 env:
   default_version: '5.9.1'
+  package_name: psutil
 
 permissions:
   id-token: write
@@ -77,37 +78,7 @@ jobs:
           if-no-files-found: error
 
   upload:
-    runs-on: [k8s-internal]
-    container:
-      image: alpine:latest
-    needs:
-      - build_wheel
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: ./dist
-
-      - name: Install deps
-        run: apk add aws-cli
-
-      - name: Vault Login
-        uses: Chia-Network/actions/vault/login@main
-        with:
-          vault_url: ${{ secrets.VAULT_URL }}
-          role_name: github
-
-      - name: Get ephemeral aws credentials
-        uses: Chia-Network/actions/vault/aws-sts@main
-        with:
-          vault_url: ${{ secrets.VAULT_URL }}
-          vault_token: ${{ env.VAULT_TOKEN }}
-          role_name: bootstrap
-
-      - name: Upload Wheels
-        if: github.event_name == 'workflow_dispatch'
-        working-directory: dist
-        run: |
-          echo just showing that we're running here, would be uploading to s3
-          # TODO: enable once we think it is properly gated
-          # find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/'
+    uses: ./.github/workflows/upload.yml
+    needs: build_wheel
+    with:
+      package_name: ${{ env.package_name }}
