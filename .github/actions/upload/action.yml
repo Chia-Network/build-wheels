@@ -51,7 +51,7 @@ runs:
       shell: sh
       run: |
         ls dist/${{ inputs.package_name }}-*.whl > wheel_list
-        cat wheel_list | xargs -I % sh -c 'ls -la %'
+        cat wheel_list | xargs -I % sh -c 'ls -l %'
 
     - name: Upload Wheels
       if: inputs.enable == 'true'
