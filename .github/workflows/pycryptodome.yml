@@ -1,4 +1,4 @@
-name: "Build pycryptodome Wheels"
+name: "📦🚀 pycryptodome"
 
 on:
   push:
@@ -29,13 +29,15 @@ permissions:
   contents: read
 
 jobs:
-  build_wheel:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - name: macos
+          - matrix: macos
+            emoji: 🍎
             runs-on: [macOS, arm64]
     steps:
       - name: Clean workspace
@@ -57,7 +59,7 @@ jobs:
           mv pycryptodome-* source
 
       - name: Install pipx
-        if: matrix.os.name == 'linux'
+        if: matrix.os.matrix == 'linux'
         run: |
           # TODO: deal with this...
           apt install pipx
@@ -80,8 +82,9 @@ jobs:
           if-no-files-found: error
 
   upload:
+    name: 🚀 Upload
     runs-on: [k8s-internal]
-    needs: build_wheel
+    needs: build
     container:
       image: alpine:latest
     steps:
