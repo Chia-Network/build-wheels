@@ -11,6 +11,15 @@ on:
       package_name:
         required: true
         type: string
+      vault_url:
+        required: true
+        type: string
+      vault_token:
+        required: true
+        type: string
+      enable:
+        required: true
+        type: bool
 
 jobs:
   upload:
@@ -29,18 +38,18 @@ jobs:
       - name: Vault Login
         uses: Chia-Network/actions/vault/login@main
         with:
-          vault_url: ${{ secrets.VAULT_URL }}
+          vault_url: ${{ inputs.vault_url }}
           role_name: github
 
       - name: Get ephemeral aws credentials
         uses: Chia-Network/actions/vault/aws-sts@main
         with:
-          vault_url: ${{ secrets.VAULT_URL }}
-          vault_token: ${{ env.VAULT_TOKEN }}
+          vault_url: ${{ inputs.vault_url }}
+          vault_token: ${{ inputs.vault_token }}
           role_name: bootstrap
 
       - name: Upload Wheels
-        if: github.event_name == 'workflow_dispatch'
+        if: inputs.enable
         working-directory: dist
         run: |
           echo just showing that we're running here, would be uploading to s3
