@@ -88,5 +88,5 @@ jobs:
         with:
           package_name: pycryptodome
           artifact_name: wheel
-          enable: ${{ github.event_name == 'workflow_dispatch' }}
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}

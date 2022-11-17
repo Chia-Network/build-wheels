@@ -9,7 +9,7 @@ inputs:
   artifact_name:
     description: "name of the artifact containing the wheels"
     required: true
-  enable:
+  dry_run:
     description: "whether to upload to S3"
     required: true
   aws_role:
@@ -53,7 +53,7 @@ runs:
         cat wheel_list | xargs -I % sh -c 'ls -l %'
 
     - name: Upload Wheels
-      if: inputs.enable == 'true'
+      if: inputs.dry_run == 'false'
       shell: sh
       run: |
         echo just showing that we are running here, would be uploading to s3
