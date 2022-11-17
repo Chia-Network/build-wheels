@@ -1,15 +1,28 @@
-name: "Build pycryptodome Wheels"
+name: "Build psutil Wheels"
 
 on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
   workflow_dispatch:
     inputs:
       version:
         description: "The version to build"
         required: true
-        default: ""
 
 concurrency:
-  group: "pycryptodome-${{ github.event.inputs.version }}"
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
+
+env:
+  default_version: '3.15.0'
 
 permissions:
   id-token: write
@@ -17,7 +30,13 @@ permissions:
 
 jobs:
   build_wheel:
-    runs-on: [macOS, ARM64]
+    runs-on: ${{ matrix.os.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: macos
+            runs-on: [macOS, arm64]
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -30,16 +49,23 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip download --no-deps --no-binary :all: pycryptodome==${{ github.event.inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages pycryptodome==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
         run: |
-          tar -xvzf pycryptodome-${{ github.event.inputs.version }}.tar.gz
+          tar -xvzf packages/pycryptodome-*
+          mv pycryptodome-* source
+
+      - name: Install pipx
+        if: matrix.os.name == 'linux'
+        run: |
+          # TODO: deal with this...
+          apt install pipx
 
       - name: Build and test
         uses: pypa/cibuildwheel@v2.7.0
         with:
-          package-dir: pycryptodome-${{ github.event.inputs.version }}
+          package-dir: source
           output-dir: dist
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
@@ -47,38 +73,23 @@ jobs:
           CIBW_ARCHS_MACOS: arm64
 
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: wheel
           path: ./dist
+          if-no-files-found: error
 
   upload:
     runs-on: [k8s-internal]
+    needs: build_wheel
     container:
       image: alpine:latest
-    needs:
-      - build_wheel
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: ./dist
+      - uses: actions/checkout@v3
 
-      - name: Install deps
-        run: apk add aws-cli
-
-      - name: Vault Login
-        uses: Chia-Network/actions/vault/login@main
+      - uses: ./.github/actions/upload
         with:
+          package_name: pycryptodome
+          artifact_name: wheel
+          enable: ${{ github.event_name == 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}
-          role_name: github
-
-      - name: Get ephemeral aws credentials
-        uses: Chia-Network/actions/vault/aws-sts@main
-        with:
-          vault_url: ${{ secrets.VAULT_URL }}
-          vault_token: ${{ env.VAULT_TOKEN }}
-          role_name: bootstrap
-
-      - name: Upload Wheels
-        run: |
-          aws s3 cp dist/pycryptodome-* s3://download.chia.net/simple/pycryptodome/
