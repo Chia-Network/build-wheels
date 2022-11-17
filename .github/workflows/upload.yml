@@ -17,8 +17,6 @@ jobs:
     runs-on: [k8s-internal]
     container:
       image: alpine:latest
-    needs:
-      - build_wheel
     steps:
       - uses: actions/download-artifact@v3
         with:
