@@ -94,7 +94,5 @@ jobs:
         with:
           package_name: psutil
           artifact_name: wheel
-          # TODO: undo this
-#          enable: ${{ github.event_name == 'workflow_dispatch' }}
-          enable: ${{ github.event_name == 'pull_request' }}
+          enable: ${{ github.event_name == 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}
