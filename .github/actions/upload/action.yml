@@ -12,6 +12,9 @@ inputs:
   enable:
     description: "whether to upload to S3"
     required: true
+  aws_role:
+    description: "AWS role for the S3 upload"
+    default: "installer-upload"
   vault_url:
     description: "the vault URL"
     required: true
@@ -42,7 +45,7 @@ runs:
       with:
         vault_url: ${{ inputs.vault_url }}
         vault_token: ${{ inputs.vault_token }}
-        role_name: bootstrap
+        role_name: ${{ inputs.aws_role }}
 
     - name: Upload Wheels
       if: inputs.enable == 'true'
