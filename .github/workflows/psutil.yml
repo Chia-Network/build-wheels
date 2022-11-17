@@ -81,7 +81,6 @@ jobs:
     needs: build_wheel
     with:
       package_name: psutil
-      enable: github.event_name == 'workflow_dispatch'
-      vault_token: ${{ env.VAULT_TOKEN }}
+      enable: ${{ github.event_name == 'workflow_dispatch' }}
     secrets:
       vault_url: ${{ secrets.VAULT_URL }}

@@ -18,9 +18,6 @@ on:
       vault_url:
         required: true
         type: string
-      vault_token:
-        required: true
-        type: string
 
 jobs:
   upload:
