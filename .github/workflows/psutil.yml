@@ -82,6 +82,6 @@ jobs:
     with:
       package_name: psutil
       enable: github.event_name == 'workflow_dispatch'
+      vault_token: ${{ env.VAULT_TOKEN }}
     secrets:
       vault_url: ${{ secrets.VAULT_URL }}
-      vault_token: ${{ env.VAULT_TOKEN }}
