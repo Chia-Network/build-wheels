@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  default_version: '5.9.1'
+  default_version: '5.9.4'
 
 permissions:
   id-token: write
