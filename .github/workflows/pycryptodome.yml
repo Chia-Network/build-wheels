@@ -50,6 +50,10 @@ jobs:
       - name: TESTING
         run: |
           set -vx
+          sleep 30
+          echo ${RUNNER_TEMP}
+          echo ${GITHUB_RUN_ID}
+          echo ${GITHUB_RUN_ATTEMPT}
           echo ${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT} >> ${RUNNER_TEMP}/TESTING
           sleep 60
           exit 1
