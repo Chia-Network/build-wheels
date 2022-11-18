@@ -1,0 +1,64 @@
+name: Upload wheels to S3
+
+description: "Upload wheels to S3"
+
+inputs:
+  package_name:
+    description: "name of the package the wheels are for"
+    required: true
+  artifact_name:
+    description: "name of the artifact containing the wheels"
+    required: true
+  dry_run:
+    description: "whether to upload to S3"
+    required: true
+  aws_role:
+    description: "AWS role for the S3 upload"
+    default: "installer-upload"
+  vault_url:
+    description: "the vault URL"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ./dist
+
+    - name: Install deps
+      shell: sh
+      run: |
+        ( command -v apk && apk add aws-cli ) || true
+        ( command -v apt-get && apt-get update && apt-get install -y awscli ) || true
+
+    - name: Vault Login
+      uses: Chia-Network/actions/vault/login@main
+      with:
+        vault_url: ${{ inputs.vault_url }}
+        role_name: github
+
+    - name: Get ephemeral aws credentials
+      uses: Chia-Network/actions/vault/aws-sts@main
+      with:
+        vault_url: ${{ inputs.vault_url }}
+        vault_token: ${{ env.VAULT_TOKEN }}
+        role_name: ${{ inputs.aws_role }}
+
+    - name: List existing wheels
+      shell: sh
+      run: |
+        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/
+
+    - name: List new wheels
+      shell: sh
+      run: |
+        ls dist/${{ inputs.package_name }}-*.whl > wheel_list
+        cat wheel_list | xargs -I % sh -c 'ls -l %'
+
+    - name: Upload wheels
+      if: inputs.dry_run == 'false'
+      shell: sh
+      run: |
+        cat wheel_list | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/${{ inputs.package_name }}/'
