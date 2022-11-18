@@ -58,15 +58,17 @@ jobs:
           tar -xvzf packages/pycryptodome-*
           mv pycryptodome-* source
 
+      - name: Install tools
+        run: |
+          pip install cibuildwheel==2.7.0
+
       - name: Build and test
-        uses: pypa/cibuildwheel@v2.7.0
-        with:
-          package-dir: source
-          output-dir: dist
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: cp38-*
           CIBW_ARCHS_MACOS: arm64
+        run: |
+          cibuildwheel source --output-dir dist
 
       - uses: actions/upload-artifact@v3
         if: always()
