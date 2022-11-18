@@ -1,29 +1,46 @@
-name: "Build psutil Wheels"
+name: "📦🚀 psutil"
 
 on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
   workflow_dispatch:
     inputs:
       version:
         description: "The version to build"
         required: true
-        default: ""
 
 concurrency:
-  group: "psutil-${{ github.event.inputs.version }}"
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
+
+env:
+  default_version: '5.9.1'
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  build_wheel:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
+      fail-fast: false
       matrix:
         os:
-          - name: macos
+          - matrix: macos
+            emoji: 🍎
             runs-on: [macOS, arm64]
-          - name: linux
+          - matrix: linux
+            emoji: 🐧
             runs-on: [linux, arm64]
     steps:
       - name: Clean workspace
@@ -37,16 +54,17 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip download --no-deps --no-binary :all: psutil==${{ github.event.inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages psutil==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
         run: |
-          tar -xvzf psutil-${{ github.event.inputs.version }}.tar.gz
+          tar -xvzf packages/psutil-*
+          mv psutil-* source
 
       - name: Build and test
         uses: pypa/cibuildwheel@v2.7.0
         with:
-          package-dir: psutil-${{ github.event.inputs.version }}
+          package-dir: source
           output-dir: dist
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
@@ -55,39 +73,24 @@ jobs:
           CIBW_ARCHS_LINUX: aarch64
 
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: wheel
           path: ./dist
+          if-no-files-found: error
 
   upload:
+    name: 🚀 Upload
     runs-on: [k8s-internal]
+    needs: build
     container:
       image: alpine:latest
-    needs:
-      - build_wheel
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: ./dist
+      - uses: actions/checkout@v3
 
-      - name: Install deps
-        run: apk add aws-cli
-
-      - name: Vault Login
-        uses: Chia-Network/actions/vault/login@main
+      - uses: ./.github/actions/upload
         with:
+          package_name: psutil
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}
-          role_name: github
-
-      - name: Get ephemeral aws credentials
-        uses: Chia-Network/actions/vault/aws-sts@main
-        with:
-          vault_url: ${{ secrets.VAULT_URL }}
-          vault_token: ${{ env.VAULT_TOKEN }}
-          role_name: bootstrap
-
-      - name: Upload Wheels
-        working-directory: dist
-        run: |
-          find . -type f -name "psutil-*" | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/psutil/'
