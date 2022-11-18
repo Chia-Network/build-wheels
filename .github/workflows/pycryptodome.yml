@@ -46,6 +46,13 @@ jobs:
       - uses: Chia-Network/actions/setup-python@main
         with:
           python-version: "3.9"
+      
+      - name: TESTING
+        run: |
+          set -vx
+          echo ${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT} >> ${RUNNER_TEMP}/TESTING
+          sleep 60
+          exit 1
 
       - name: Get source dist
         run: |
