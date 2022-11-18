@@ -59,7 +59,7 @@ jobs:
           mv pycryptodome-* source
 
       - name: Build and test
-        uses: pypa/cibuildwheel@v2.7.0
+        uses: pypa/cibuildwheel@v2.11.2
         with:
           package-dir: source
           output-dir: dist
