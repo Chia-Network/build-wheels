@@ -65,6 +65,11 @@ jobs:
           tar -xvzf packages/psutil-*
           mv psutil-* source
 
+      - name: Pull out test files
+        run: |
+          mkdir psutil
+          cp -R source/psutil/tests/ psutil/
+
       - name: Install tools
         run: |
           pip install cibuildwheel==2.11.2
