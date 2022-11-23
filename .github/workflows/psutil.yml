@@ -67,7 +67,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==2.7.0
+          pip install cibuildwheel==2.11.2
 
       - name: Build and test
         env:
