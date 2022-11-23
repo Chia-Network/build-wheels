@@ -50,6 +50,13 @@ jobs:
         with:
           python-version: "3.9"
 
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
       - name: Get source dist
         run: |
           python -m venv venv
