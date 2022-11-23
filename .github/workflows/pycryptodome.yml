@@ -46,6 +46,7 @@ jobs:
       - uses: Chia-Network/actions/setup-python@main
         with:
           python-version: "3.9"
+          automatic-venv: true
 
       - name: Get source dist
         run: |
