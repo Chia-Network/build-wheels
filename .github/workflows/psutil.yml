@@ -63,12 +63,7 @@ jobs:
       - name: Untar
         run: |
           tar -xvzf packages/psutil-*
-          mv psutil-* source
-
-      - name: Pull out test files
-        run: |
-          mkdir psutil
-          cp -R source/psutil/tests/ psutil/
+          mv psutil-*/* .
 
       - name: Install tools
         run: |
