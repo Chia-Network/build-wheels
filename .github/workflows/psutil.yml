@@ -75,7 +75,7 @@ jobs:
           CIBW_BUILD: cp36-*
           CIBW_ARCHS_LINUX: aarch64
         run: |
-          cibuildwheel source --output-dir dist
+          cibuildwheel . --output-dir dist
 
       - uses: actions/upload-artifact@v3
         if: always()
