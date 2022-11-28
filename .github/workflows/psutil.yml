@@ -76,9 +76,9 @@ jobs:
 
       - name: Build and test
         env:
-          CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: cp36-*
           CIBW_ARCHS_LINUX: aarch64
+          CIBW_TEST_SKIP: "*-*linux_aarch64"
         run: |
           cibuildwheel source --output-dir dist
 
