@@ -39,10 +39,7 @@ jobs:
         os:
           - matrix: macos
             emoji: 🍎
-            runs-on: [macOS, arm64]
-          - matrix: linux
-            emoji: 🐧
-            runs-on: [linux, arm64]
+            runs-on: [macos-latest]
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
