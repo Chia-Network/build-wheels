@@ -99,7 +99,7 @@ jobs:
           - matrix.python.major-dot-minor: '3.8'
           - matrix.python.major-dot-minor: '3.9'
           - matrix.python.major-dot-minor: '3.10'
-      steps:
+    steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
 
