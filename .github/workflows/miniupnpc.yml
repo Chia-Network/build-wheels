@@ -1,4 +1,4 @@
-name: "📦🚀 ${{ env.name }}"
+name: "📦🚀 miniupnpc"
 
 on:
   push:
