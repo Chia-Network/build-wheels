@@ -103,8 +103,6 @@ jobs:
               major-dot-minor: '3.9'
           - python:
               major-dot-minor: '3.10'
-          - python:
-              major-dot-minor: '3.11'
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
