@@ -95,10 +95,21 @@ jobs:
           - name: Intel
             matrix: intel
         exclude:
-          - matrix.python.major-dot-minor: '3.7'
-          - matrix.python.major-dot-minor: '3.8'
-          - matrix.python.major-dot-minor: '3.9'
-          - matrix.python.major-dot-minor: '3.10'
+          - matrix:
+              python:
+                major-dot-minor: '3.7'
+          - matrix:
+              python:
+                major-dot-minor: '3.8'
+          - matrix:
+              python:
+                major-dot-minor: '3.9'
+          - matrix:
+              python:
+                major-dot-minor: '3.10'
+          - matrix:
+              python:
+                major-dot-minor: '3.11'
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
