@@ -21,6 +21,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 env:
   default_version: '2.2.2'
   name: miniupnpc
