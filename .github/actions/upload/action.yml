@@ -61,6 +61,7 @@ runs:
 
     - name: Choose wheels to upload
       shell: sh
+      continue-on-error: ${{ inputs.dry_run == 'true' }}
       run: |
         grep -F -x -v -f existing_wheel_list new_wheel_list > upload_wheel_list
         cat upload_wheel_list
