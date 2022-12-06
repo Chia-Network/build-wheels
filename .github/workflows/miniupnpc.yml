@@ -24,7 +24,7 @@ concurrency:
 env:
   default_version: '2.2.2'
   name: miniupnpc
-  pip_options: '--index-url https://pypi.chia.net/simple'
+  pip_options: '--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple'
 
 permissions:
   id-token: write
