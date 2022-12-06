@@ -51,6 +51,9 @@ jobs:
             cibw-archs-macos:
               arm: arm64
               intel: x86_64
+            macosx-deployment-target:
+              arm: 11.0
+              intel: 10.14
           - name: Linux
             matrix: linux
             emoji: 🐧
@@ -158,6 +161,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
           CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
           CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
         run: |
           cibuildwheel source --output-dir dist
