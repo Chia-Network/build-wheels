@@ -140,6 +140,7 @@ jobs:
           pip install cibuildwheel==2.11.2
 
       - name: Build and test
+        shell: ${{ matrix.os.matrix == 'windows' && 'powershell' || 'bash' }}
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
