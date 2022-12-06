@@ -169,6 +169,7 @@ jobs:
           mingw32-make -f Makefile.mingw CC=gcc
           python -m pip install wheel
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
+          zip -u dist/*.whl miniupnpc.dll
           cp -R dist ../dist
 
       - uses: actions/upload-artifact@v3
