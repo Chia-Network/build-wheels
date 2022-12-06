@@ -49,16 +49,24 @@ runs:
     - name: List existing wheels
       shell: sh
       run: |
-        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/
+        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/ > existing_wheel_list_raw
+        cat existing_wheel_list_raw
+        cat existing_wheel_list_raw | tr -s ' ' | cut -d ' ' -f 4 > existing_wheel_list
 
     - name: List new wheels
       shell: sh
       run: |
-        ls dist/${{ inputs.package_name }}-*.whl > wheel_list
-        cat wheel_list | xargs -I % sh -c 'ls -l %'
+        find dist/ -mindepth 1 -maxdepth 1 -printf "%f\n" > new_wheel_list
+        ls -l $(cat new_wheel_list)
+
+    - name: Choose wheels to upload
+      shell: sh
+      run: |
+        grep -F -x -v -f existing_wheel_list new_wheel_list > upload_wheel_list
+        cat upload_wheel_list
 
     - name: Upload wheels
       if: inputs.dry_run == 'false'
       shell: sh
       run: |
-        cat wheel_list | xargs -I % sh -c 'aws s3 cp % s3://download.chia.net/simple/${{ inputs.package_name }}/'
+        cat upload_wheel_list | xargs -I % sh -c 'aws s3 cp dist/% s3://download.chia.net/simple/${{ inputs.package_name }}/'
