@@ -56,8 +56,8 @@ runs:
     - name: List new wheels
       shell: sh
       run: |
-        find dist/ -mindepth 1 -maxdepth 1 -printf "%f\n" > new_wheel_list
-        ls -l $(cat new_wheel_list)
+        (cd dist/; ls ${{ inputs.package_name }}-*.whl) > new_wheel_list
+        cat new_wheel_list | xargs -I % sh -c 'ls -l %'
 
     - name: Choose wheels to upload
       shell: sh
