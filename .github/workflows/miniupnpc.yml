@@ -172,6 +172,11 @@ jobs:
           7z a dist/*.whl miniupnpc.dll
           cp -R dist ../dist
 
+      - name: Install
+        run: |
+          pip install --no-index --only-binary :all: --find-links dist miniupnpc
+          python -c 'import miniupnpc'
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
