@@ -105,8 +105,8 @@ jobs:
               major-dot-minor: '3.8'
           - python:
               major-dot-minor: '3.9'
-          - python:
-              major-dot-minor: '3.10'
+#          - python:
+#              major-dot-minor: '3.10'
           - os:
               matrix: windows
             arch:
