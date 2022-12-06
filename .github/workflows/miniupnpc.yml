@@ -172,6 +172,13 @@ jobs:
           7z a dist/*.whl miniupnpc.dll
           cp -R dist ../dist
 
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-test-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+
       - name: Install
         run: |
           pip install --no-index --only-binary :all: --find-links dist miniupnpc
