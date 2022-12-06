@@ -117,7 +117,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.os.major-dot-minor }}
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -136,10 +136,12 @@ jobs:
           mv ${{ env.name }}-* source
 
       - name: Install tools
+        if: matrix.os.matrix != 'windows'
         run: |
           pip install cibuildwheel==2.11.2
 
       - name: Build and test
+        if: matrix.os.matrix != 'windows'
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
@@ -149,6 +151,15 @@ jobs:
           CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
         run: |
           cibuildwheel source --output-dir dist
+
+      - name: Build (Windows)
+        if: matrix.os.matrix == 'windows'
+        run: |
+          cd source
+          mingw32-make -f Makefile.mingw CC=gcc
+          python -m pip install wheel
+          mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
+          cp -R dist ../dist
 
       - uses: actions/upload-artifact@v3
         if: always()
