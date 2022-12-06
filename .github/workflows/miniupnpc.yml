@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.os.emoji }} 📦 Build
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.os.emoji }} ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
     runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     strategy:
       fail-fast: false
