@@ -175,7 +175,10 @@ jobs:
       - name: Install
         run: |
           pip install --no-index --only-binary :all: --find-links dist miniupnpc
-          python -c 'import miniupnpc'
+
+      - name: Import
+        run: |
+          python -c 'import miniupnpc; print(miniupnpc)'
 
       - uses: actions/upload-artifact@v3
         if: always()
