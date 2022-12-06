@@ -21,10 +21,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-
 env:
   default_version: '2.2.2'
   name: miniupnpc
@@ -127,20 +123,23 @@ jobs:
           directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
 
       - name: Get source dist
+        shell: bash
         run: |
           pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
+        shell: bash
         run: |
           tar -xvzf packages/${{ env.name }}-*
           mv ${{ env.name }}-* source
 
       - name: Install tools
+        shell: bash
         run: |
           pip install cibuildwheel==2.11.2
 
       - name: Build and test
-        shell: ${{ matrix.os.matrix == 'windows' && 'powershell' || 'bash' }}
+        # specifically using native shell
         env:
           CIBW_BUILD_VERBOSITY_MACOS: 0
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
