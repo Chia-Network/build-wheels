@@ -169,9 +169,9 @@ jobs:
           mingw32-make -f Makefile.mingw CC=gcc
           python -m pip install wheel
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
-          rm dist/*.egg
           7z a dist/*.whl miniupnpc.dll
-          cp -R dist ../dist
+          mkdir ../dist
+          cp dist/*.whl ../dist
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-test-venv
