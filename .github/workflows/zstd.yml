@@ -128,8 +128,6 @@ jobs:
 
       - name: Get source dist
         run: |
-          python -m venv venv
-          . ./venv/bin/activate
           pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
