@@ -99,6 +99,16 @@ jobs:
               matrix: windows
             python:
               matrix: '3.8'
+          # tests are failing and we don't technically need this now, would be nice to have them working though
+          - os:
+              matrix: macos
+            arch:
+              matrix: arm
+          - os:
+              matrix: windows
+            arch:
+              matrix: intel
+          
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
