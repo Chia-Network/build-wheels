@@ -31,15 +31,82 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.os.emoji }} 📦 Build
-    runs-on: ${{ matrix.os.runs-on }}
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - matrix: macos
+          - name: macOS
+            matrix: macos
             emoji: 🍎
-            runs-on: [macos-latest]
+            runs-on:
+              arm: [macOS, ARM64]
+              intel: [macos-latest]
+            cibw-archs-macos:
+              arm: arm64
+              intel: x86_64
+            macosx-deployment-target:
+              arm: 11.0
+              intel: 10.14
+          - name: Linux
+            matrix: linux
+            emoji: 🐧
+            runs-on:
+              arm: [Linux, ARM64]
+              intel: [ubuntu-latest]
+          - name: Windows
+            matrix: windows
+            emoji: 🪟
+            runs-on:
+              intel: [windows-latest]
+        python:
+          - major-dot-minor: '3.7'
+            cibw-build: 'cp37-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.7'
+          - major-dot-minor: '3.8'
+            cibw-build: 'cp38-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.8'
+          - major-dot-minor: '3.9'
+            cibw-build: 'cp39-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.9'
+          - major-dot-minor: '3.10'
+            cibw-build: 'cp310-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.10'
+          - major-dot-minor: '3.11'
+            cibw-build: 'cp311-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2014
+            matrix: '3.11'
+        arch:
+          - name: ARM
+            matrix: arm
+          - name: Intel
+            matrix: intel
+        exclude:
+          - os:
+              matrix: windows
+            arch:
+              matrix: arm
+          - os:
+              matrix: macos
+            arch:
+              matrix: arm
+            python:
+              matrix: '3.7'
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -72,9 +139,13 @@ jobs:
 
       - name: Build and test
         env:
-          CIBW_BUILD: cp38-* cp39-* cp310-*
-          CIBW_ARCHS_MACOS: x86_64
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=10.14
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
+          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
         run: |
           cibuildwheel source --output-dir dist
 
