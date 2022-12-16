@@ -124,7 +124,7 @@ jobs:
       - name: Pull out test files
         run: |
           mkdir psutil
-          cp -R source/psutil/tests/ psutil/
+          cp -R source/psutil/tests psutil/
           find $(pwd)/psutil/
 
       - name: Install tools
