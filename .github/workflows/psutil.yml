@@ -60,36 +60,12 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.7'
-            cibw-build: 'cp37-*'
+          - major-dot-minor: '3.6'
+            cibw-build: 'cp36-*'
             manylinux:
               arch: manylinux2014
               intel: manylinux2010
-            matrix: '3.7'
-          - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.8'
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.9'
-          - major-dot-minor: '3.10'
-            cibw-build: 'cp310-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.10'
-          - major-dot-minor: '3.11'
-            cibw-build: 'cp311-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2014
-            matrix: '3.11'
+            matrix: '3.6'
         arch:
           - name: ARM
             matrix: arm
@@ -143,8 +119,14 @@ jobs:
 
       - name: Build and test
         env:
-          CIBW_BUILD: cp36-*
-          CIBW_ARCHS_LINUX: aarch64
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=${{ matrix.arch.matrix == 'intel' && '10.14' || '11.0' }}"
+          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+          # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
         run: |
           cibuildwheel source --output-dir dist
