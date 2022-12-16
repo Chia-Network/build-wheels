@@ -154,12 +154,12 @@ jobs:
       - name: Build and test
         if: matrix.os.matrix != 'windows'
         env:
-          CIBW_BUILD_VERBOSITY_MACOS: 0
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
-          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
+          CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
         run: |
           cibuildwheel source --output-dir dist
