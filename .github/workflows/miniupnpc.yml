@@ -106,6 +106,12 @@ jobs:
               matrix: windows
             arch:
               matrix: arm
+          - os:
+              matrix: macos
+            arch:
+              matrix: arm
+            python:
+              matrix: '3.7'
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
