@@ -1,0 +1,214 @@
+name: "📦🚀 miniupnpc"
+
+on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  default_version: '2.2.2'
+  name: miniupnpc
+  pip_options: '--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: macOS
+            matrix: macos
+            emoji: 🍎
+            runs-on:
+              arm: [macOS, ARM64]
+              intel: [macos-latest]
+            cibw-archs-macos:
+              arm: arm64
+              intel: x86_64
+            macosx-deployment-target:
+              arm: 11.0
+              intel: 10.14
+          - name: Linux
+            matrix: linux
+            emoji: 🐧
+            runs-on:
+              arm: [Linux, ARM64]
+              intel: [ubuntu-latest]
+          - name: Windows
+            matrix: windows
+            emoji: 🪟
+            runs-on:
+              intel: [windows-latest]
+        python:
+          - major-dot-minor: '3.7'
+            cibw-build: 'cp37-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.7'
+          - major-dot-minor: '3.8'
+            cibw-build: 'cp38-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.8'
+          - major-dot-minor: '3.9'
+            cibw-build: 'cp39-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.9'
+          - major-dot-minor: '3.10'
+            cibw-build: 'cp310-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2010
+            matrix: '3.10'
+          - major-dot-minor: '3.11'
+            cibw-build: 'cp311-*'
+            manylinux:
+              arch: manylinux2014
+              intel: manylinux2014
+            matrix: '3.11'
+        arch:
+          - name: ARM
+            matrix: arm
+          - name: Intel
+            matrix: intel
+        exclude:
+          - os:
+              matrix: windows
+            arch:
+              matrix: arm
+          - os:
+              matrix: macos
+            arch:
+              matrix: arm
+            python:
+              matrix: '3.7'
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: ${{ matrix.python.major-dot-minor }}
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+#      - name: Get source dist
+#        run: |
+#          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+
+#      - name: Untar
+#        run: |
+#          tar -xvzf packages/${{ env.name }}-*
+#          mv ${{ env.name }}-* source
+
+      - uses: actions/checkout@v3
+        with:
+          repository: Chia-Network/miniupnp
+          ref: 558df0d58d0e51e32d6b43dae5a9ce229387c4f6
+          path: cloned
+
+      - name: Copy out miniupnpc
+        run: |
+          cp -R cloned/miniupnpc source
+
+      - name: Install tools
+        if: matrix.os.matrix != 'windows'
+        run: |
+          pip install cibuildwheel==2.11.2
+
+      - name: Build and test
+        if: matrix.os.matrix != 'windows'
+        env:
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
+          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+        run: |
+          cibuildwheel source --output-dir dist
+
+      - name: Build (Windows)
+        if: matrix.os.matrix == 'windows'
+        run: |
+          cd source
+          mingw32-make -f Makefile.mingw CC=gcc
+          python -m pip install wheel
+          mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
+          7z a dist/*.whl miniupnpc.dll
+          mkdir ../dist
+          cp dist/*.whl ../dist
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-test-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+
+      - name: Install
+        run: |
+          pip install --no-index --only-binary :all: --find-links dist miniupnpc
+
+      - name: Import
+        run: |
+          python -c 'import miniupnpc; print(miniupnpc)'
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: wheel
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: [k8s-internal]
+    needs: build
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ env.name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
