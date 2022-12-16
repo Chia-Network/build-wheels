@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python[matrix.os.python].major-dot-minor }}
     runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     strategy:
       fail-fast: false
@@ -52,30 +52,35 @@ jobs:
             macosx-deployment-target:
               arm: 11.0
               intel: 10.14
+            python: '3.8'
           - name: Linux
             matrix: linux
             emoji: 🐧
             runs-on:
               arm: [Linux, ARM64]
               intel: [ubuntu-latest]
+            python: '3.7'
           - name: Windows
             matrix: windows
             emoji: 🪟
             runs-on:
               intel: [windows-latest]
+            python: '3.7'
         python:
-          - major-dot-minor: '3.7'
-            cibw-build: 'cp37-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.7'
-          - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.8'
+          - '3.7':
+              major-dot-minor: '3.7'
+              cibw-build: 'cp37-*'
+              manylinux:
+                arch: manylinux2014
+                intel: manylinux2010
+              matrix: '3.7'
+            '3.8':
+              major-dot-minor: '3.8'
+              cibw-build: 'cp38-*'
+              manylinux:
+                arch: manylinux2014
+                intel: manylinux2010
+              matrix: '3.8'
         arch:
           - name: ARM
             matrix: arm
@@ -86,19 +91,6 @@ jobs:
               matrix: windows
             arch:
               matrix: arm
-          # building abi3 so only need one per os
-          - os:
-              matrix: linux
-            python:
-              matrix: '3.8'
-          - os:
-              matrix: macos
-            python:
-              matrix: '3.7'
-          - os:
-              matrix: windows
-            python:
-              matrix: '3.8'
           # tests are failing and we don't technically need this now, would be nice to have them working though
           - os:
               matrix: macos
@@ -146,10 +138,10 @@ jobs:
       - name: Build and test
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
-          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_BUILD: ${{ matrix.python[matrix.os.python].cibw-build }}
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
-          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
+          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python[matrix.os.python].manylinux['arm'] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python[matrix.os.python].manylinux['intel'] }}
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
