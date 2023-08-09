@@ -15,6 +15,9 @@ inputs:
   aws_role:
     description: "AWS role for the S3 upload"
     default: "installer-upload"
+  aws_account:
+    description: "AWS account ID that the AWS role belongs to"
+    required: true
   vault_url:
     description: "the vault URL"
     required: true
@@ -36,7 +39,7 @@ runs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: arn:aws:iam::${{ secrets.CHIA_AWS_ACCOUNT_ID }}:role/${{ inputs.aws_role }}
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account }}:role/${{ inputs.aws_role }}
         aws-region: us-west-2
 
     - name: List existing wheels
