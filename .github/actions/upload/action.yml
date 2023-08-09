@@ -33,18 +33,11 @@ runs:
         ( command -v apk && apk add aws-cli ) || true
         ( command -v apt-get && apt-get update && apt-get install -y awscli ) || true
 
-    - name: Vault Login
-      uses: Chia-Network/actions/vault/login@main
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
       with:
-        vault_url: ${{ inputs.vault_url }}
-        role_name: github
-
-    - name: Get ephemeral aws credentials
-      uses: Chia-Network/actions/vault/aws-sts@main
-      with:
-        vault_url: ${{ inputs.vault_url }}
-        vault_token: ${{ env.VAULT_TOKEN }}
-        role_name: ${{ inputs.aws_role }}
+        role-to-assume: arn:aws:iam::${{ secrets.CHIA_AWS_ACCOUNT_ID }}:role/${{ inputs.aws_role }}
+        aws-region: us-west-2
 
     - name: List existing wheels
       shell: sh
