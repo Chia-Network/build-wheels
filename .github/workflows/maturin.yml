@@ -1,0 +1,131 @@
+name: "📦🚀 maturin"
+
+on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  default_version: '1.2.3'
+  name: maturin
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: Linux
+            matrix: linux
+            emoji: 🐧
+            runs-on: [ubuntu-latest]
+        python:
+          - major-dot-minor: '3.8'
+            matrix: '3.8'
+          - major-dot-minor: '3.9'
+            matrix: '3.9'
+          - major-dot-minor: '3.10'
+            matrix: '3.10'
+          - major-dot-minor: '3.11'
+            matrix: '3.11'
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: "3.9"
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+      - name: Get source dist
+        run: |
+          pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+
+      - name: Untar
+        run: |
+          tar -xvzf packages/${{ env.name }}-*
+          mv ${{ env.name }}-* source
+
+      - name: Set up QEMU on x86_64
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: riscv64
+      
+      - name: Build wheel
+        run: |
+          docker run --rm --platform linux/riscv64 \
+          -v ${{ github.workspace }}:/ws --workdir=/ws \
+          riscv64/debian:rc-buggy \
+          bash -exc '\
+          apt-get update && \
+          apt-get install -y build-essential git curl make libssl-dev zlib1g zlib1g-dev libreadline-dev libffi-dev && \
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+          source $HOME/.cargo/env && \
+          curl https://pyenv.run | bash && \
+          export PYENV_ROOT="$HOME/.pyenv" && \
+          export PATH="$PYENV_ROOT/bin:$PATH" && \
+          eval "$(pyenv init --path)" && \
+          PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install --skip-existing ${{ matrix.python.matrix }} && \
+          pyenv global ${{ matrix.python.matrix }} && \
+          python3 -m venv venv && \
+          source ./venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip wheel -w dist ./source \
+          '
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: wheel
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: [k8s-internal]
+    needs: build
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ env.name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
