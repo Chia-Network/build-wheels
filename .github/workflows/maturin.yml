@@ -88,17 +88,8 @@ jobs:
         run: |
           docker run --rm --platform linux/riscv64 \
           -v ${{ github.workspace }}:/ws --workdir=/ws \
-          riscv64/debian:rc-buggy \
+          ghcr.io/chia-network/build-images:sha-efe57506a60bd1d95d033fe1553b6851b5bf2a42 \
           bash -exc '\
-          apt-get update && \
-          apt-get install -y build-essential git curl make libssl-dev zlib1g zlib1g-dev libreadline-dev libffi-dev && \
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-          source $HOME/.cargo/env && \
-          curl https://pyenv.run | bash && \
-          export PYENV_ROOT="$HOME/.pyenv" && \
-          export PATH="$PYENV_ROOT/bin:$PATH" && \
-          eval "$(pyenv init --path)" && \
-          PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install --skip-existing ${{ matrix.python.matrix }} && \
           pyenv global ${{ matrix.python.matrix }} && \
           python3 -m venv venv && \
           source ./venv/bin/activate && \
