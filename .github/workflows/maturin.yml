@@ -76,6 +76,10 @@ jobs:
 
       - name: Get source dist
         run: |
+          set -vx
+          python --version --version
+          python -m pip --version
+          pip --version
           pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
