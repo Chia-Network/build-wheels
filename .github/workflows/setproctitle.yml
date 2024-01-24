@@ -25,9 +25,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  default_version: '1.3.2'
-
 permissions:
   id-token: write
   contents: read
@@ -37,4 +34,4 @@ jobs:
     uses: ./.github/reusable/build.yml
     with:
       name: setproctitle
-      version: ${{ github.event.inputs.version || env.default_version }}
+      version: ${{ github.event.inputs.version || '1.3.2' }}
