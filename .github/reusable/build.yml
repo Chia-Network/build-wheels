@@ -10,7 +10,6 @@ on:
         required: true
         type: string
       pip_options:
-        default: ''
         required: false
         type: string
 
