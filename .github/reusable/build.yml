@@ -14,7 +14,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.versionblue || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
   cancel-in-progress: true
 
 defaults:
@@ -120,7 +120,7 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.name }}==${{ inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.name }}==${{ inputs.versionblue }}
 
       - name: Untar
         run: |
