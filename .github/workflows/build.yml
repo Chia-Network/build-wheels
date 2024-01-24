@@ -10,12 +10,14 @@ on:
         required: true
         type: string
       pip_options:
+        default: ''
         required: false
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
-  cancel-in-progress: true
+    # SHA is added to the end if on `main` to let all main workflows run
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ inputs.concurrency_name }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
 
 defaults:
   run:
@@ -120,12 +122,12 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ github.event.inputs.name }}==${{ github.event.inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.name }}==${{ inputs.version }}
 
       - name: Untar
         run: |
-          tar -xvzf packages/${{ github.event.inputs.name }}-*
-          mv ${{ github.event.inputs.name }}-* source
+          tar -xvzf packages/${{ inputs.name }}-*
+          mv ${{ inputs.name }}-* source
 
       - name: Install tools
         run: |
@@ -161,7 +163,7 @@ jobs:
 
       - uses: ./.github/actions/upload
         with:
-          package_name: ${{ github.event.inputs.name }}
+          package_name: ${{ inputs.name }}
           artifact_name: wheel
           dry_run: ${{ github.event_name != 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}

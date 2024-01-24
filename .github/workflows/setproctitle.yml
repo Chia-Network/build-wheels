@@ -11,15 +11,15 @@ on:
   pull_request:
     branches:
     - '**'
-#  workflow_dispatch:
-#    inputs:
-#      version:
-#        description: "The version to build"
-#        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
-  cancel-in-progress: true
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}--${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
 
 defaults:
   run:
@@ -34,5 +34,4 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       name: setproctitle
-      version: '1.3.2'
-      pip_options: ''
+      version: ${{ inputs.version || '1.3.2' }}
