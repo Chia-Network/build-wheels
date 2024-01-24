@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/reusable/build.yml
+    uses: ./.github/reusable/abuild.yml
     with:
       name: setproctitle
       versionred: '1.3.2'
