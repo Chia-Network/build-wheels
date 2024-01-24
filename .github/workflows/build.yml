@@ -6,7 +6,7 @@ on:
       name:
         required: true
         type: string
-      versionblue:
+      version:
         required: true
         type: string
       pip_options:
@@ -14,7 +14,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.versionblue || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
   cancel-in-progress: true
 
 defaults:
@@ -120,12 +120,12 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.name }}==${{ inputs.versionblue }}
+          pip download --no-deps --no-binary :all: --dest packages ${{ github.event.inputs.name }}==${{ github.event.inputs.version }}
 
       - name: Untar
         run: |
-          tar -xvzf packages/${{ inputs.name }}-*
-          mv ${{ inputs.name }}-* source
+          tar -xvzf packages/${{ github.event.inputs.name }}-*
+          mv ${{ github.event.inputs.name }}-* source
 
       - name: Install tools
         run: |
@@ -161,7 +161,7 @@ jobs:
 
       - uses: ./.github/actions/upload
         with:
-          package_name: ${{ inputs.name }}
+          package_name: ${{ github.event.inputs.name }}
           artifact_name: wheel
           dry_run: ${{ github.event_name != 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}
