@@ -13,8 +13,8 @@ on:
         default: ''
         required: false
         type: string
-      major-dot-minor:
-        default: all
+      only-major-dot-minor:
+        default: 'include all'
         required: false
         type: string
 
@@ -35,7 +35,6 @@ jobs:
   build:
     name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
     runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
-    if: inputs.major-dot-minor == 'all' || matrix.python.major-dot-minor == inputs.major-dot-minor
     strategy:
       fail-fast: false
       matrix:
@@ -110,6 +109,16 @@ jobs:
               matrix: arm
             python:
               matrix: '3.7'
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.7') && 'exclude nothing' || '3.7' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.10') && 'exclude nothing' || '3.10' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.11') && 'exclude nothing' || '3.11' }}
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main

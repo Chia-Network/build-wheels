@@ -36,4 +36,4 @@ jobs:
     with:
       name: pycryptodome
       version: ${{ inputs.version || '3.15.0' }}
-      major-dot-minor: '3.8'
+      only-major-dot-minor: '3.8'
