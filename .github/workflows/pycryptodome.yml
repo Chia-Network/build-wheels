@@ -29,8 +29,6 @@ permissions:
   id-token: write
   contents: read
 
-# TODO: handle cp38-only abi3 build
-
 jobs:
   build:
     uses: ./.github/workflows/build.yml
@@ -38,3 +36,4 @@ jobs:
     with:
       name: pycryptodome
       version: ${{ inputs.version || '3.15.0' }}
+      major-dot-minor: '3.8'

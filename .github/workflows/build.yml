@@ -13,6 +13,10 @@ on:
         default: ''
         required: false
         type: string
+      major-dot-minor:
+        default: all
+        required: false
+        type: string
 
 concurrency:
     # SHA is added to the end if on `main` to let all main workflows run
@@ -31,6 +35,7 @@ jobs:
   build:
     name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
     runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
+    if: inputs.major-dot-minor == 'all' || matrix.python.major-dot-minor == inputs.major-dot-minor
     strategy:
       fail-fast: false
       matrix:
