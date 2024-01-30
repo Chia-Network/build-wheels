@@ -161,6 +161,7 @@ jobs:
 
       - name: Install
         run: |
+          ls -la dist
           pip install --no-index --only-binary :all: --find-links dist ${{ inputs.name }}
 
       - name: Import
