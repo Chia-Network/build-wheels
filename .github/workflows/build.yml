@@ -159,14 +159,18 @@ jobs:
         run: |
           cibuildwheel source --output-dir dist
 
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: ${{ matrix.python.major-dot-minor }}
+
       - name: Install
         run: |
           ls -la dist
-          pip install --no-index --only-binary :all: --find-links dist ${{ inputs.name }}
+          python${{ matrix.python.major-dot-minor }} -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.name }}
 
       - name: Import
         run: |
-          python -c 'import ${{ inputs.name }}; print(${{ inputs.name }})'
+          python${{ matrix.python.major-dot-minor }} -c 'import ${{ inputs.name }}; print(${{ inputs.name }})'
 
       - uses: actions/upload-artifact@v3
         if: always()
