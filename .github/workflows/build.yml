@@ -159,6 +159,14 @@ jobs:
         run: |
           cibuildwheel source --output-dir dist
 
+      - name: Install
+        run: |
+          pip install --no-index --only-binary :all: --find-links dist ${{ inputs.name }}
+
+      - name: Import
+        run: |
+          python -c 'import ${{ inputs.name }}; print(${{ inputs.name }})'
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
