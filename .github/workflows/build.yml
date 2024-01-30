@@ -166,14 +166,21 @@ jobs:
         with:
           python-version: ${{ matrix.python.major-dot-minor }}
 
+      - uses: chia-network/actions/create-venv@main
+        id: create-venv
+
+      - uses: chia-network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
       - name: Install
         run: |
           ls -la dist
-          python${{ matrix.python.major-dot-minor }} -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
+          python -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
 
       - name: Import
         run: |
-          python${{ matrix.python.major-dot-minor }} -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
+          python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
 
       - uses: actions/upload-artifact@v3
         if: always()
