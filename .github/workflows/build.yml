@@ -139,12 +139,12 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.name }}==${{ inputs.version }}
+          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.distribution-name }}==${{ inputs.version }}
 
       - name: Untar
         run: |
-          tar -xvzf packages/${{ inputs.name }}-*
-          mv ${{ inputs.name }}-* source
+          tar -xvzf packages/${{ inputs.distribution-name }}-*
+          mv ${{ inputs.distribution-name }}-* source
 
       - name: Install tools
         run: |
@@ -169,11 +169,11 @@ jobs:
       - name: Install
         run: |
           ls -la dist
-          python${{ matrix.python.major-dot-minor }} -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.name }}
+          python${{ matrix.python.major-dot-minor }} -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
 
       - name: Import
         run: |
-          python${{ matrix.python.major-dot-minor }} -c 'import ${{ inputs.name }}; print(${{ inputs.name }})'
+          python${{ matrix.python.major-dot-minor }} -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
 
       - uses: actions/upload-artifact@v3
         if: always()
@@ -193,7 +193,7 @@ jobs:
 
       - uses: ./.github/actions/upload
         with:
-          package_name: ${{ inputs.name }}
+          package_name: ${{ inputs.distribution-name }}
           artifact_name: wheel
           dry_run: ${{ github.event_name != 'workflow_dispatch' }}
           vault_url: ${{ secrets.VAULT_URL }}
