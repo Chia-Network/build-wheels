@@ -3,7 +3,10 @@ name: "📦🚀 build"
 on:
   workflow_call:
     inputs:
-      name:
+      distribution-name:
+        required: true
+        type: string
+      import-name:
         required: true
         type: string
       version:

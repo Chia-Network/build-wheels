@@ -34,6 +34,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
-      name: pycryptodome
+      distribution-name: pycryptodome
+      import-name: crypto
       version: ${{ inputs.version || '3.15.0' }}
       only-major-dot-minor: '3.8'
