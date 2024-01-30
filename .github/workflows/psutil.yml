@@ -64,16 +64,10 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.7'
-            cibw-build: 'cp37-*'
-            manylinux:
-              arch: manylinux2014
-              intel: manylinux2010
-            matrix: '3.7'
           - major-dot-minor: '3.8'
             cibw-build: 'cp38-*'
             manylinux:
-              arch: manylinux2014
+              arm: manylinux2014
               intel: manylinux2010
             matrix: '3.8'
         arch:
@@ -86,19 +80,6 @@ jobs:
               matrix: windows
             arch:
               matrix: arm
-          # building abi3 so only need one per os
-          - os:
-              matrix: linux
-            python:
-              matrix: '3.8'
-          - os:
-              matrix: macos
-            python:
-              matrix: '3.7'
-          - os:
-              matrix: windows
-            python:
-              matrix: '3.8'
           # tests are failing and we don't technically need this now, would be nice to have them working though
           - os:
               matrix: macos
