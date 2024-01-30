@@ -67,7 +67,7 @@ jobs:
           - major-dot-minor: '3.8'
             cibw-build: 'cp38-*'
             manylinux:
-              arch: manylinux2014
+              arm: manylinux2014
               intel: manylinux2010
             matrix: '3.8'
         arch:
