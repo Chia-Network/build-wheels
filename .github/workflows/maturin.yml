@@ -46,6 +46,11 @@ jobs:
             matrix: linux
             emoji: 🐧
             runs-on: [ubuntu-latest]
+        arch:
+          - name: RISC
+            file-name: risc
+            matrix: risc
+            docker-platform: linux/riscv64
         python:
           - major-dot-minor: '3.8'
             matrix: '3.8'
@@ -57,7 +62,7 @@ jobs:
             matrix: '3.11'
     
     env:
-      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.python.major-dot-minor }}
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
 
     steps:
       - name: Clean workspace
@@ -84,6 +89,7 @@ jobs:
           mv ${{ env.name }}-* source
 
       - name: Set up QEMU on x86_64
+        if: matrix.arch.matrix == 'risc'
         id: qemu
         uses: docker/setup-qemu-action@v2
         with:
@@ -91,7 +97,7 @@ jobs:
       
       - name: Build wheel
         run: |
-          docker run --rm --platform linux/riscv64 \
+          docker run --rm --platform ${{ matrix.arch.docker-platform }} \
           -v ${{ github.workspace }}:/ws --workdir=/ws \
           chianetwork/ubuntu-22.04-risc-builder:latest \
           bash -exc '\

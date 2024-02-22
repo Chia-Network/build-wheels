@@ -75,8 +75,10 @@ jobs:
             matrix: '3.8'
         arch:
           - name: ARM
+            file-name: arm
             matrix: arm
           - name: Intel
+            file-name: intel
             matrix: intel
         exclude:
           - os:
@@ -94,7 +96,7 @@ jobs:
               matrix: intel
 
     env:
-      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.python.major-dot-minor }}
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
 
     steps:
       - name: Clean workspace

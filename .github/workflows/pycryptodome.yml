@@ -31,7 +31,7 @@ permissions:
 jobs:
   build:
     name: ${{ matrix.os.emoji }} 📦 Build
-    runs-on: ${{ matrix.os.runs-on }}
+    runs-on: ${{ matrix.os.runs-on[matrix-arch.matrix] }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,10 +39,15 @@ jobs:
           - matrix: macos
             file-name: macos
             emoji: 🍎
-            runs-on: [macOS, arm64]
+            runs-on: 
+              arm: [macOS, arm64]
+        arch:
+          - name: ARM
+            file-name: arm
+            matrix: arm
     
     env:
-      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.python.major-dot-minor }}
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
 
     steps:
       - name: Clean workspace
