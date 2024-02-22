@@ -50,7 +50,6 @@ jobs:
           - name: RISC
             file-name: risc
             matrix: risc
-            docker-platform: linux/riscv64
         python:
           - major-dot-minor: '3.8'
             matrix: '3.8'
@@ -97,7 +96,7 @@ jobs:
       
       - name: Build wheel
         run: |
-          docker run --rm --platform ${{ matrix.arch.docker-platform }} \
+          docker run --rm --platform linux/riscv64 \
           -v ${{ github.workspace }}:/ws --workdir=/ws \
           chianetwork/ubuntu-22.04-risc-builder:latest \
           bash -exc '\
