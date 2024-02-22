@@ -42,9 +42,14 @@ jobs:
       matrix:
         os:
           - name: Linux
+            file-name: linux
             matrix: linux
             emoji: 🐧
             runs-on: [ubuntu-latest]
+        arch:
+          - name: RISC
+            file-name: risc
+            matrix: risc
         python:
           - major-dot-minor: '3.8'
             matrix: '3.8'
@@ -54,6 +59,10 @@ jobs:
             matrix: '3.10'
           - major-dot-minor: '3.11'
             matrix: '3.11'
+    
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
+
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -79,6 +88,7 @@ jobs:
           mv ${{ env.name }}-* source
 
       - name: Set up QEMU on x86_64
+        if: matrix.arch.matrix == 'risc'
         id: qemu
         uses: docker/setup-qemu-action@v2
         with:
@@ -97,10 +107,10 @@ jobs:
           pip wheel -w dist ./source \
           '
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wheel
+          name: wheel-${{ env.FILE_NAME }}
           path: ./dist
           if-no-files-found: error
 
