@@ -168,6 +168,8 @@ jobs:
 
       - uses: chia-network/actions/create-venv@main
         id: create-test-venv
+        with:
+          python-command: python${{ matrix.python.major-dot-minor }}
 
       - uses: chia-network/actions/activate-venv@main
         with:
