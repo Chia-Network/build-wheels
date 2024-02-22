@@ -41,6 +41,7 @@ jobs:
       matrix:
         os:
           - name: macOS
+            file-name: macos
             matrix: macos
             emoji: 🍎
             runs-on:
@@ -53,12 +54,14 @@ jobs:
               arm: 11.0
               intel: 10.14
           - name: Linux
+            file-name: linux
             matrix: linux
             emoji: 🐧
             runs-on:
               arm: [Linux, ARM64]
               intel: [ubuntu-latest]
           - name: Windows
+            file-name: windows
             matrix: windows
             emoji: 🪟
             runs-on:
@@ -72,8 +75,10 @@ jobs:
             matrix: '3.8'
         arch:
           - name: ARM
+            file-name: arm
             matrix: arm
           - name: Intel
+            file-name: intel
             matrix: intel
         exclude:
           - os:
@@ -89,7 +94,10 @@ jobs:
               matrix: windows
             arch:
               matrix: intel
-          
+
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
+
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -138,10 +146,10 @@ jobs:
         run: |
           cibuildwheel source --output-dir dist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wheel
+          name: wheel-${{ env.FILE_NAME }}
           path: ./dist
           if-no-files-found: error
 
