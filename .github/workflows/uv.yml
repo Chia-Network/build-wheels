@@ -1,0 +1,126 @@
+name: "📦🚀 uv"
+
+on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  default_version: '0.1.7'
+  name: uv
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: Linux
+            file-name: linux
+            matrix: linux
+            emoji: 🐧
+            runs-on: [ubuntu-latest]
+        arch:
+          - name: RISC
+            file-name: risc
+            matrix: risc
+        python:
+          - major-dot-minor: '3.10'
+            matrix: '3.10'
+
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
+
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: "3.10"
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+      - name: Get source dist
+        run: |
+          pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+
+      - name: Untar
+        run: |
+          tar -xvzf packages/${{ env.name }}-*
+          mv ${{ env.name }}-* source
+
+      - name: Set up QEMU on x86_64
+        if: matrix.arch.matrix == 'risc'
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: riscv64
+      
+      - name: Build wheel
+        run: |
+          docker run --rm --platform linux/riscv64 \
+          -v ${{ github.workspace }}:/ws --workdir=/ws \
+          chianetwork/ubuntu-22.04-risc-builder:latest \
+          bash -exc '\
+          pyenv global ${{ matrix.python.matrix }} && \
+          python3 -m venv venv && \
+          source ./venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip wheel -w dist ./source \
+          '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wheel-${{ env.FILE_NAME }}
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: [k8s-internal]
+    needs: build
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ env.name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
