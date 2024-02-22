@@ -167,11 +167,11 @@ jobs:
           python-version: ${{ matrix.python.major-dot-minor }}
 
       - uses: chia-network/actions/create-venv@main
-        id: create-venv
+        id: create-test-venv
 
       - uses: chia-network/actions/activate-venv@main
         with:
-          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
 
       - name: Install
         run: |
