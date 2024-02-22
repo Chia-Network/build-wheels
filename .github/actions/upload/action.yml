@@ -25,10 +25,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.artifact_name }}
+        pattern: ${{ inputs.artifact_name }}-*
         path: ./dist
+        merge-multiple: true
 
     - name: Install deps
       shell: sh

@@ -37,8 +37,13 @@ jobs:
       matrix:
         os:
           - matrix: macos
+            file-name: macos
             emoji: 🍎
             runs-on: [macOS, arm64]
+    
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.python.major-dot-minor }}
+
     steps:
       - name: Clean workspace
         uses: Chia-Network/actions/clean-workspace@main
@@ -77,10 +82,10 @@ jobs:
         run: |
           cibuildwheel source --output-dir dist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wheel
+          name: wheel-${{ env.FILE_NAME }}
           path: ./dist
           if-no-files-found: error
 
