@@ -105,14 +105,6 @@ jobs:
               matrix: windows
             arch:
               matrix: arm
-          - os:
-              matrix: macos
-            arch:
-              matrix: arm
-            python:
-              matrix: '3.7'
-          - python:
-              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.7') && 'exclude nothing' || '3.7' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
