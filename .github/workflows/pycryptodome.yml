@@ -31,7 +31,7 @@ permissions:
 jobs:
   build:
     name: ${{ matrix.os.emoji }} 📦 Build
-    runs-on: ${{ matrix.os.runs-on[matrix-arch.matrix] }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
     strategy:
       fail-fast: false
       matrix:
