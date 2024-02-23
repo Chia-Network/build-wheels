@@ -94,6 +94,7 @@ jobs:
           -v ${{ github.workspace }}:/ws --workdir=/ws \
           chianetwork/ubuntu-22.04-risc-builder:latest \
           bash -exc '\
+          ld --version && \
           pyenv global ${{ matrix.python.matrix }} && \
           python3 -m venv venv && \
           source ./venv/bin/activate && \
