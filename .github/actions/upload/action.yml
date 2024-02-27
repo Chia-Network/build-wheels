@@ -52,7 +52,10 @@ runs:
     - name: List existing wheels
       shell: sh
       run: |
-        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/ > existing_wheel_list_raw
+        # making sure the parent exists and the command works
+        aws s3 ls s3://download.chia.net/simple/
+        # continue assuming no existing wheels when the directory does not exist
+        aws s3 ls s3://download.chia.net/simple/${{ inputs.package_name }}/ > existing_wheel_list_raw || true
         cat existing_wheel_list_raw
         cat existing_wheel_list_raw | tr -s ' ' | cut -d ' ' -f 4 > existing_wheel_list
 
