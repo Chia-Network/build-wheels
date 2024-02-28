@@ -92,7 +92,7 @@ jobs:
         run: |
           docker run --rm --platform linux/riscv64 \
           -v ${{ github.workspace }}:/ws --workdir=/ws \
-          chianetwork/ubuntu-22.04-risc-builder:sha-18c7f106e16f956b512f6159fff9d97285eee5fe \
+          chianetwork/ubuntu-22.04-risc-builder:latest \
           bash -exc '\
           ld --version && \
           pyenv global ${{ matrix.python.matrix }} && \
