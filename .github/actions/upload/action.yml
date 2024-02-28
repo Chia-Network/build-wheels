@@ -69,7 +69,7 @@ runs:
       shell: sh
       continue-on-error: ${{ inputs.dry_run == 'true' }}
       run: |
-        grep -F -x -v -f existing_wheel_list new_wheel_list > upload_wheel_list
+        grep -F -x -v -f existing_wheel_list new_wheel_list > upload_wheel_list || true
         cat upload_wheel_list
 
     - name: Upload wheels
