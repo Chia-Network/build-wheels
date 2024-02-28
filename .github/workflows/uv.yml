@@ -74,7 +74,7 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+          pip download -vvv --no-deps --only-binary :all: --no-binary ${{ env.name }} --extra-index-url https://pypi.chia.net/simple/ --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
       - name: Untar
         run: |
@@ -99,7 +99,7 @@ jobs:
           python3 -m venv venv && \
           source ./venv/bin/activate && \
           pip install --upgrade pip && \
-          pip wheel -vvv --config-settings VERBOSE=2 -w dist ./source \
+          pip wheel -vvv --config-settings VERBOSE=2 --only-binary :all: --extra-index-url https://pypi.chia.net/simple/ -w dist ./source \
           '
 
       - uses: actions/upload-artifact@v4
