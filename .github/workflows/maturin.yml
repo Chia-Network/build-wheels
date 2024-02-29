@@ -105,7 +105,7 @@ jobs:
           -e SCCACHE_PATH="/sccache" \
           -e SCCACHE_GHA_ENABLED=true \
           -e ACTIONS_CACHE_URL="${ACTIONS_CACHE_URL}" \
-          -e ACTIONS_RUNTIME_TOKEN="${ACTIONS_RUNTIME_TOKEN}"\
+          -e ACTIONS_RUNTIME_TOKEN="${ACTIONS_RUNTIME_TOKEN}" \
           -e RUSTC_WRAPPER=sccache \
           --workdir=/ws \
           chianetwork/ubuntu-22.04-risc-builder:sha-0d7c527a30d4871e02416b5c7b67ca2df2ad868c \
