@@ -114,7 +114,7 @@ jobs:
           python3 -m venv venv && \
           source ./venv/bin/activate && \
           pip install --upgrade pip && \
-          pip wheel -w dist ./source \
+          pip wheel -w dist ./source && \
           sccache --show-stats \
           '
 
