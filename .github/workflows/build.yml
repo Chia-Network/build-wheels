@@ -1,0 +1,198 @@
+name: "📦🚀 build"
+
+on:
+  workflow_call:
+    inputs:
+      distribution-name:
+        required: true
+        type: string
+      import-name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      pip_options:
+        default: ''
+        required: false
+        type: string
+      only-major-dot-minor:
+        default: 'include all'
+        required: false
+        type: string
+
+concurrency:
+    # SHA is added to the end if on `main` to let all main workflows run
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ inputs.distribution-name }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: macOS
+            file-name: macos
+            matrix: macos
+            emoji: 🍎
+            runs-on:
+              arm: [macOS, ARM64]
+              intel: [macos-latest]
+            cibw-archs-macos:
+              arm: arm64
+              intel: x86_64
+            macosx-deployment-target:
+              arm: 11.0
+              intel: 10.14
+          - name: Linux
+            file-name: linux
+            matrix: linux
+            emoji: 🐧
+            runs-on:
+              arm: [Linux, ARM64]
+              intel: [ubuntu-latest]
+          - name: Windows
+            file-name: windows
+            matrix: windows
+            emoji: 🪟
+            runs-on:
+              intel: [windows-latest]
+        python:
+          - major-dot-minor: '3.8'
+            cibw-build: 'cp38-*'
+            manylinux:
+              arm: manylinux2014
+              intel: manylinux2010
+            matrix: '3.8'
+          - major-dot-minor: '3.9'
+            cibw-build: 'cp39-*'
+            manylinux:
+              arm: manylinux2014
+              intel: manylinux2010
+            matrix: '3.9'
+          - major-dot-minor: '3.10'
+            cibw-build: 'cp310-*'
+            manylinux:
+              arm: manylinux2014
+              intel: manylinux2010
+            matrix: '3.10'
+          - major-dot-minor: '3.11'
+            cibw-build: 'cp311-*'
+            manylinux:
+              arm: manylinux2014
+              intel: manylinux2014
+            matrix: '3.11'
+        arch:
+          - name: ARM
+            file-name: arm
+            matrix: arm
+          - name: Intel
+            file-name: intel
+            matrix: intel
+        exclude:
+          - os:
+              matrix: windows
+            arch:
+              matrix: arm
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.10') && 'exclude nothing' || '3.10' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.11') && 'exclude nothing' || '3.11' }}
+
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
+
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: ${{ matrix.python.major-dot-minor }}
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+      - name: Get source dist
+        run: |
+          pip download --no-deps --no-binary :all: --dest packages ${{ inputs.distribution-name }}==${{ inputs.version }}
+
+      - name: Untar
+        run: |
+          tar -xvzf packages/${{ inputs.distribution-name }}-*
+          mv ${{ inputs.distribution-name }}-* source
+
+      - name: Install tools
+        run: |
+          pip install cibuildwheel==2.11.2
+
+      - name: Build and test
+        env:
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
+          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+        run: |
+          cibuildwheel source --output-dir dist
+
+      - uses: chia-network/actions/create-venv@main
+        id: create-test-venv
+
+      - uses: chia-network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+
+      - name: Install
+        run: |
+          ls -la dist
+          python -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
+
+      - name: Import
+        run: |
+          python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wheel-${{ env.FILE_NAME }}
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: [k8s-internal]
+    needs: build
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ inputs.distribution-name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}

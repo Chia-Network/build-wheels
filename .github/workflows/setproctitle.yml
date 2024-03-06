@@ -18,16 +18,12 @@ on:
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
-  cancel-in-progress: true
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
 
 defaults:
   run:
     shell: bash
-
-env:
-  default_version: '1.3.2'
-  name: setproctitle
 
 permissions:
   id-token: write
@@ -35,139 +31,9 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
-    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - name: macOS
-            file-name: macos
-            matrix: macos
-            emoji: 🍎
-            runs-on:
-              arm: [macOS, ARM64]
-              intel: [macos-latest]
-            cibw-archs-macos:
-              arm: arm64
-              intel: x86_64
-            macosx-deployment-target:
-              arm: 11.0
-              intel: 10.14
-          - name: Linux
-            file-name: linux
-            matrix: linux
-            emoji: 🐧
-            runs-on:
-              arm: [Linux, ARM64]
-              intel: [ubuntu-latest]
-          - name: Windows
-            file-name: windows
-            matrix: windows
-            emoji: 🪟
-            runs-on:
-              intel: [windows-latest]
-        python:
-          - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
-            matrix: '3.8'
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
-            matrix: '3.9'
-          - major-dot-minor: '3.10'
-            cibw-build: 'cp310-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
-            matrix: '3.10'
-          - major-dot-minor: '3.11'
-            cibw-build: 'cp311-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2014
-            matrix: '3.11'
-        arch:
-          - name: ARM
-            file-name: arm
-            matrix: arm
-          - name: Intel
-            file-name: intel
-            matrix: intel
-        exclude:
-          - os:
-              matrix: windows
-            arch:
-              matrix: arm
-    
-    env:
-      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
-
-    steps:
-      - name: Clean workspace
-        uses: Chia-Network/actions/clean-workspace@main
-
-      - uses: Chia-Network/actions/setup-python@main
-        with:
-          python-version: "3.10"
-
-      - uses: Chia-Network/actions/create-venv@main
-        id: create-venv
-
-      - uses: Chia-Network/actions/activate-venv@main
-        with:
-          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
-
-      - name: Get source dist
-        run: |
-          pip download --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
-
-      - name: Untar
-        run: |
-          tar -xvzf packages/${{ env.name }}-*
-          mv ${{ env.name }}-* source
-
-      - name: Install tools
-        run: |
-          pip install cibuildwheel==2.11.2
-
-      - name: Build and test
-        env:
-          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
-          CIBW_BUILD: ${{ matrix.python.cibw-build }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
-          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
-          CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
-        run: |
-          cibuildwheel source --output-dir dist
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: wheel-${{ env.FILE_NAME }}
-          path: ./dist
-          if-no-files-found: error
-
-  upload:
-    name: 🚀 Upload
-    runs-on: [k8s-internal]
-    needs: build
-    container:
-      image: alpine:latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/upload
-        with:
-          package_name: ${{ env.name }}
-          artifact_name: wheel
-          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
-          vault_url: ${{ secrets.VAULT_URL }}
-          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      distribution-name: setproctitle
+      import-name: setproctitle
+      version: ${{ inputs.version || '1.3.2' }}
