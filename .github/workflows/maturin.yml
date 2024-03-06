@@ -87,6 +87,9 @@ jobs:
           tar -xvzf packages/${{ env.name }}-*
           mv ${{ env.name }}-* source
 
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
       - name: Set up QEMU on x86_64
         if: matrix.arch.matrix == 'risc'
         id: qemu
@@ -97,7 +100,14 @@ jobs:
       - name: Build wheel
         run: |
           docker run --rm --platform linux/riscv64 \
-          -v ${{ github.workspace }}:/ws --workdir=/ws \
+          -v ${{ github.workspace }}:/ws \
+          -v "${SCCACHE_PATH}":/sccache \
+          -e SCCACHE_PATH="/sccache" \
+          -e SCCACHE_GHA_ENABLED=true \
+          -e ACTIONS_CACHE_URL="${ACTIONS_CACHE_URL}" \
+          -e ACTIONS_RUNTIME_TOKEN="${ACTIONS_RUNTIME_TOKEN}" \
+          -e RUSTC_WRAPPER=sccache \
+          --workdir=/ws \
           chianetwork/ubuntu-22.04-risc-builder:latest \
           bash -exc '\
           pyenv global ${{ matrix.python.matrix }} && \
