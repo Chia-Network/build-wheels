@@ -103,14 +103,31 @@ jobs:
           - name: ARM
             file-name: arm
             matrix: arm
+            crossbuild:
           - name: Intel
             file-name: intel
             matrix: intel
+            crossbuild:
+          - name: RISCV
+            file-name: risc
+            matrix: risc
+            crossbuild:
+              qemu_platform: riscv64
+              docker_platform: linux/riscv64
+              image: chianetwork/ubuntu-22.04-risc-builder:latest
         exclude:
+          - os:
+              matrix: macos
+            arch:
+              matrix: risc
           - os:
               matrix: windows
             arch:
               matrix: arm
+          - os:
+              matrix: windows
+            arch:
+              matrix: risc
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
@@ -150,10 +167,12 @@ jobs:
           mv ${{ inputs.distribution-name }}-* source
 
       - name: Install tools
+        if: ! matrix.arch.crossbuild
         run: |
           pip install cibuildwheel==2.16.5
 
       - name: Build and test
+        if: ! matrix.arch.crossbuild
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
@@ -166,20 +185,57 @@ jobs:
           cibuildwheel source --output-dir dist
 
       - uses: chia-network/actions/create-venv@main
+        if: ! matrix.arch.crossbuild
         id: create-test-venv
 
       - uses: chia-network/actions/activate-venv@main
+        if: ! matrix.arch.crossbuild
         with:
           directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
 
       - name: Install
+        if: ! matrix.arch.crossbuild
         run: |
           ls -la dist
           python -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
 
       - name: Import
+        if: ! matrix.arch.crossbuild
         run: |
           python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
+
+      - name: Run sccache-cache
+        if: matrix.arch.crossbuild
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Set up QEMU on x86_64
+        if: matrix.arch.crossbuild
+        id: qemu
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.arch.crossbuild.qemu_platform }}
+
+      - name: Build wheel
+        if: matrix.arch.crossbuild
+        run: |
+          docker run --rm --platform ${{ matrix.arch.crossbuild.docker_platform }} \
+          -v ${{ github.workspace }}:/ws \
+          -v "${SCCACHE_PATH}":/sccache \
+          -e SCCACHE_PATH="/sccache" \
+          -e SCCACHE_GHA_ENABLED=true \
+          -e ACTIONS_CACHE_URL="${ACTIONS_CACHE_URL}" \
+          -e ACTIONS_RUNTIME_TOKEN="${ACTIONS_RUNTIME_TOKEN}" \
+          -e RUSTC_WRAPPER=sccache \
+          --workdir=/ws \
+          ${{ matrix.arch.crossbuild.image }} \
+          bash -exc '\
+          pyenv global ${{ matrix.python.matrix }} && \
+          python3 -m venv venv && \
+          source ./venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip wheel -w dist ./source && \
+          sccache --show-stats \
+          '
 
       - uses: actions/upload-artifact@v4
         if: always()
