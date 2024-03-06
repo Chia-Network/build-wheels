@@ -62,6 +62,7 @@ jobs:
             runs-on:
               arm: [Linux, ARM64]
               intel: [ubuntu-latest]
+              risc: [ubuntu-latest]
           - name: Windows
             file-name: windows
             matrix: windows
