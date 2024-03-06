@@ -167,12 +167,12 @@ jobs:
           mv ${{ inputs.distribution-name }}-* source
 
       - name: Install tools
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         run: |
           pip install cibuildwheel==2.16.5
 
       - name: Build and test
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
@@ -185,22 +185,22 @@ jobs:
           cibuildwheel source --output-dir dist
 
       - uses: chia-network/actions/create-venv@main
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         id: create-test-venv
 
       - uses: chia-network/actions/activate-venv@main
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         with:
           directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
 
       - name: Install
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         run: |
           ls -la dist
           python -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
 
       - name: Import
-        if: ! matrix.arch.crossbuild
+        if: (! matrix.arch.crossbuild)
         run: |
           python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
 
