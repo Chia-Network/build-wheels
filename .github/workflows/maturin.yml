@@ -115,6 +115,7 @@ jobs:
           source ./venv/bin/activate && \
           pip install --upgrade pip && \
           pip wheel -w dist ./source \
+          sccache --show-stats \
           '
 
       - uses: actions/upload-artifact@v4
