@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/rust.yml
+    uses: ./.github/workflows/reflows/rust.yml
     secrets: inherit
     with:
       distribution-name: uv
