@@ -1,4 +1,4 @@
-name: "📦🚀 build"
+name: "📦🚀 build rust"
 
 on:
   workflow_call:
@@ -22,9 +22,8 @@ on:
         type: string
 
 concurrency:
-    # SHA is added to the end if on `main` to let all main workflows run
-    group: ${{ github.ref }}-${{ github.workflow }}-${{ inputs.distribution-name }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || format('{0}-{1}-{2}', github.ref, github.event_name, github.ref == 'refs/heads/main' && github.sha || '') }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -36,81 +35,33 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
-    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - name: macOS
-            file-name: macos
-            matrix: macos
-            emoji: 🍎
-            runs-on:
-              arm: [macOS, ARM64]
-              intel: [macos-latest]
-            cibw-archs-macos:
-              arm: arm64
-              intel: x86_64
-            macosx-deployment-target:
-              arm: 11.0
-              intel: 11.0
           - name: Linux
             file-name: linux
             matrix: linux
             emoji: 🐧
-            runs-on:
-              arm: [Linux, ARM64]
-              intel: [ubuntu-latest]
-          - name: Windows
-            file-name: windows
-            matrix: windows
-            emoji: 🪟
-            runs-on:
-              intel: [windows-latest]
+            runs-on: [ubuntu-latest]
+        arch:
+          - name: RISC
+            file-name: risc
+            matrix: risc
         python:
           - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
             matrix: '3.8'
           - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
             matrix: '3.9'
           - major-dot-minor: '3.10'
-            cibw-build: 'cp310-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2010
             matrix: '3.10'
           - major-dot-minor: '3.11'
-            cibw-build: 'cp311-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2014
             matrix: '3.11'
           - major-dot-minor: '3.12'
-            cibw-build: 'cp312-*'
-            manylinux:
-              arm: manylinux2014
-              intel: manylinux2014
             matrix: '3.12'
-        arch:
-          - name: ARM
-            file-name: arm
-            matrix: arm
-          - name: Intel
-            file-name: intel
-            matrix: intel
         exclude:
-          - os:
-              matrix: windows
-            arch:
-              matrix: arm
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
@@ -131,7 +82,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: ${{ matrix.python.major-dot-minor }}
+          python-version: "3.10"
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -149,37 +100,36 @@ jobs:
           tar -xvzf packages/${{ inputs.distribution-name }}-*
           mv ${{ inputs.distribution-name }}-* source
 
-      - name: Install tools
-        run: |
-          pip install cibuildwheel==2.16.5
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
-      - name: Build and test
-        env:
-          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
-          CIBW_BUILD: ${{ matrix.python.cibw-build }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
-          CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux['arm'] }}
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux['intel'] }}
-          CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
-        run: |
-          cibuildwheel source --output-dir dist
-
-      - uses: chia-network/actions/create-venv@main
-        id: create-test-venv
-
-      - uses: chia-network/actions/activate-venv@main
+      - name: Set up QEMU on x86_64
+        if: matrix.arch.matrix == 'risc'
+        id: qemu
+        uses: docker/setup-qemu-action@v3
         with:
-          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+          platforms: riscv64
 
-      - name: Install
+      - name: Build wheel
         run: |
-          ls -la dist
-          python -m pip install --no-index --only-binary :all: --find-links dist ${{ inputs.distribution-name }}
-
-      - name: Import
-        run: |
-          python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
+          docker run --rm --platform linux/riscv64 \
+          -v ${{ github.workspace }}:/ws \
+          -v "${SCCACHE_PATH}":/sccache \
+          -e SCCACHE_PATH="/sccache" \
+          -e SCCACHE_GHA_ENABLED=true \
+          -e ACTIONS_CACHE_URL="${ACTIONS_CACHE_URL}" \
+          -e ACTIONS_RUNTIME_TOKEN="${ACTIONS_RUNTIME_TOKEN}" \
+          -e RUSTC_WRAPPER=sccache \
+          --workdir=/ws \
+          chianetwork/ubuntu-22.04-risc-builder:latest \
+          bash -exc '\
+          ld --version && \
+          pyenv global ${{ matrix.python.matrix }} && \
+          python3 -m venv venv && \
+          source ./venv/bin/activate && \
+          pip install --upgrade pip && \
+          pip wheel -vvv --only-binary :all: --extra-index-url https://pypi.chia.net/simple/ -w dist ./source \
+          '
 
       - uses: actions/upload-artifact@v4
         if: always()
