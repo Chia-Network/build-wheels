@@ -155,7 +155,7 @@ jobs:
 
   upload:
     name: 🚀 Upload
-    runs-on: [k8s-internal]
+    runs-on: [k8s-public]
     needs: build
     container:
       image: alpine:latest
