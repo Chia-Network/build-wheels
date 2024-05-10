@@ -46,13 +46,13 @@ jobs:
             emoji: 🍎
             runs-on:
               arm: [macOS, ARM64]
-              intel: [macos-latest]
+              intel: [macos-12]
             cibw-archs-macos:
               arm: arm64
               intel: x86_64
             macosx-deployment-target:
               arm: 11.0
-              intel: 10.14
+              intel: 11.0
           - name: Linux
             file-name: linux
             matrix: linux
