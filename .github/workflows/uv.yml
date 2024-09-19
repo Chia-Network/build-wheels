@@ -29,12 +29,22 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  VERSION: ${{ inputs.version || '0.1.7' }}
+
 jobs:
   build:
-    uses: ./.github/workflows/rust.yml
-    secrets: inherit
+    uses: ./.github/workflows/reflow-build-maturin.yml
     with:
       distribution-name: uv
       import-name: uv
-      version: ${{ inputs.version || '0.1.7' }}
+      version: ${{ env.VERSION }}
       only-major-dot-minor: '3.10'
+
+  upload:
+    uses: ./.github/workflows/reflow-upload-to-chia-pypi.yml
+    needs: build
+    secrets: inherit
+    with:
+      distribution-name: uv
+      version: ${{ env.VERSION }}
