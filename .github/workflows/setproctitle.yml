@@ -29,11 +29,22 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  VERSION: ${{ inputs.version || '1.3.2' }}
+
 jobs:
   build:
-    uses: ./.github/workflows/build.yml
-    secrets: inherit
+    uses: ./.github/workflows/reflow-build-cibuildwheel.yml
     with:
       distribution-name: setproctitle
       import-name: setproctitle
-      version: ${{ inputs.version || '1.3.2' }}
+      version: ${{ env.VERSION }}
+      only-major-dot-minor: '3.8'
+
+  upload:
+    uses: ./.github/workflows/reflow-upload-to-chia-pypi.yml
+    needs: build
+    secrets: inherit
+    with:
+      distribution-name: setproctitle
+      version: ${{ env.VERSION }}
