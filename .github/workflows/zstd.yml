@@ -29,21 +29,11 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  VERSION: ${{ inputs.version || '1.5.2.6' }}
-
 jobs:
   build:
-    uses: ./.github/workflows/reflow-build-cibuildwheel.yml
-    with:
-      distribution-name: zstd
-      import-name: zstd
-      version: ${{ env.VERSION }}
-
-  upload:
-    uses: ./.github/workflows/reflow-upload-to-chia-pypi.yml
-    needs: build
+    uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
       distribution-name: zstd
-      version: ${{ env.VERSION }}
+      import-name: zstd
+      version: ${{ inputs.version || '1.5.2.6' }}
