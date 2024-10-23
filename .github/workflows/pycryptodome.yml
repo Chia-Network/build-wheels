@@ -37,4 +37,4 @@ jobs:
       distribution-name: pycryptodome
       import-name: Crypto
       version: ${{ inputs.version || '3.15.0' }}
-      only-major-dot-minor: '3.8'
+      only-major-dot-minor: '3.9'
