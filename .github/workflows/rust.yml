@@ -51,8 +51,6 @@ jobs:
             file-name: risc
             matrix: risc
         python:
-          - major-dot-minor: '3.8'
-            matrix: '3.8'
           - major-dot-minor: '3.9'
             matrix: '3.9'
           - major-dot-minor: '3.10'
@@ -62,8 +60,6 @@ jobs:
           - major-dot-minor: '3.12'
             matrix: '3.12'
         exclude:
-          - python:
-              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
           - python:
