@@ -188,7 +188,6 @@ jobs:
 
   upload:
     name: 🚀 Upload
-    if: "'${{ secrets.CHIA_AWS_ACCOUNT_ID }}' != ''"
     runs-on: ubuntu-latest
     needs: build
     steps:
