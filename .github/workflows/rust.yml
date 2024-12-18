@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/upload
-        if: ${{ secrets.CHIA_AWS_ACCOUNT_ID }} != ''
+        if: "${{ secrets.CHIA_AWS_ACCOUNT_ID }} != ''"
         with:
           package_name: ${{ inputs.distribution-name }}
           artifact_name: wheel
