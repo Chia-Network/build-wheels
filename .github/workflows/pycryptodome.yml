@@ -29,22 +29,12 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  VERSION: ${{ inputs.version || '3.15.0' }}
-
 jobs:
   build:
-    uses: ./.github/workflows/reflow-build-cibuildwheel.yml
-    with:
-      distribution-name: pycryptodome
-      import-name: Crypto
-      version: ${{ env.VERSION }}
-      only-major-dot-minor: '3.8'
-
-  upload:
-    uses: ./.github/workflows/reflow-upload-to-chia-pypi.yml
-    needs: build
+    uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
       distribution-name: pycryptodome
-      version: ${{ env.VERSION }}
+      import-name: Crypto
+      version: ${{ inputs.version || '3.15.0' }}
+      only-major-dot-minor: '3.9'

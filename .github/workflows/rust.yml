@@ -1,4 +1,4 @@
-name: "📦 build rust"
+name: "📦🚀 build rust"
 
 on:
   workflow_call:
@@ -51,8 +51,6 @@ jobs:
             file-name: risc
             matrix: risc
         python:
-          - major-dot-minor: '3.8'
-            matrix: '3.8'
           - major-dot-minor: '3.9'
             matrix: '3.9'
           - major-dot-minor: '3.10'
@@ -62,8 +60,6 @@ jobs:
           - major-dot-minor: '3.12'
             matrix: '3.12'
         exclude:
-          - python:
-              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
           - python:
@@ -101,7 +97,7 @@ jobs:
           mv ${{ inputs.distribution-name }}-* source
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.6
 
       - name: Set up QEMU on x86_64
         if: matrix.arch.matrix == 'risc'
@@ -137,3 +133,19 @@ jobs:
           name: wheel-${{ env.FILE_NAME }}
           path: ./dist
           if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    if: "'${{ secrets.CHIA_AWS_ACCOUNT_ID }}' != ''"
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ inputs.distribution-name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}

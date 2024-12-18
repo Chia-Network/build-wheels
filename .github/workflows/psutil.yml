@@ -45,14 +45,14 @@ jobs:
             matrix: macos
             emoji: 🍎
             runs-on:
-              arm: [macOS, ARM64]
-              intel: [macos-12]
+              arm: [macos-13-arm64]
+              intel: [macos-13]
             cibw-archs-macos:
               arm: arm64
               intel: x86_64
             macosx-deployment-target:
-              arm: 11.0
-              intel: 10.14
+              arm: 13.0
+              intel: 13.0
           - name: Linux
             file-name: linux
             matrix: linux
@@ -67,10 +67,10 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
+          - major-dot-minor: '3.9'
+            cibw-build: 'cp39-*'
             manylinux: manylinux_2_28
-            matrix: '3.8'
+            matrix: '3.9'
         arch:
           - name: ARM
             file-name: arm

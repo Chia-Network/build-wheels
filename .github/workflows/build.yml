@@ -47,14 +47,14 @@ jobs:
             matrix: macos
             emoji: 🍎
             runs-on:
-              arm: [macOS, ARM64]
-              intel: [macos-12]
+              arm: [macos-13-arm64]
+              intel: [macos-13]
             cibw-archs-macos:
               arm: arm64
               intel: x86_64
             macosx-deployment-target:
-              arm: 11.0
-              intel: 11.0
+              arm: 13.0
+              intel: 13.0
           - name: Linux
             file-name: linux
             matrix: linux
@@ -69,10 +69,6 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.8'
-            cibw-build: 'cp38-*'
-            manylinux: manylinux_2_28
-            matrix: '3.8'
           - major-dot-minor: '3.9'
             cibw-build: 'cp39-*'
             manylinux: manylinux_2_28
@@ -101,8 +97,6 @@ jobs:
               matrix: windows
             arch:
               matrix: arm
-          - python:
-              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.8') && 'exclude nothing' || '3.8' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
           - python:
@@ -177,3 +171,19 @@ jobs:
           name: wheel-${{ env.FILE_NAME }}
           path: ./dist
           if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    if: "'${{ secrets.CHIA_AWS_ACCOUNT_ID }}' != ''"
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: ${{ inputs.distribution-name }}
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
