@@ -188,13 +188,13 @@ jobs:
 
   upload:
     name: 🚀 Upload
-    if: ${{ secrets.CHIA_AWS_ACCOUNT_ID }} != ''
     runs-on: ubuntu-latest
     needs: build
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/upload
+        if: ${{ secrets.CHIA_AWS_ACCOUNT_ID }} != ''
         with:
           package_name: ${{ env.name }}
           artifact_name: wheel
