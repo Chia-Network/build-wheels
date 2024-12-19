@@ -62,7 +62,6 @@ runs:
         cat existing_wheel_list_raw | tr -s ' ' | cut -d ' ' -f 4 > existing_wheel_list
 
     - name: List new wheels
-      if: inputs.aws_account != ''
       shell: sh
       run: |
         (cd dist/; ls ${{ inputs.package_name }}-*.whl) > new_wheel_list
