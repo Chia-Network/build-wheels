@@ -43,27 +43,15 @@ runs:
         ( command -v apk && apk add aws-cli ) || true
         ( command -v apt-get && apt-get update && apt-get install -y awscli ) || true
 
-    - name: Check AWS account specified
-      id: aws-account-specified
-      shell: sh
-      run: |
-        if [ -z "${{ inputs.aws_account }}" ]; then
-#          echo specified=true | tee -a "$GITHUB_OUTPUT"
-          echo specified=false | tee -a "$GITHUB_OUTPUT"
-        else:
-#          echo specified=true | tee -a "$GITHUB_OUTPUT"
-          echo specified=false | tee -a "$GITHUB_OUTPUT"
-        fi
-
     - name: Configure AWS credentials
-      if: steps.aws-account-specified.outputs.specified
+      if: inputs.aws_account != ''
       uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account }}:role/${{ inputs.aws_role }}
         aws-region: us-west-2
 
     - name: List existing wheels
-      if: steps.aws-account-specified.outputs.specified
+      if: inputs.aws_account != ''
       shell: sh
       run: |
         # making sure the parent exists and the command works
@@ -74,14 +62,14 @@ runs:
         cat existing_wheel_list_raw | tr -s ' ' | cut -d ' ' -f 4 > existing_wheel_list
 
     - name: List new wheels
-      if: steps.aws-account-specified.outputs.specified
+      if: inputs.aws_account != ''
       shell: sh
       run: |
         (cd dist/; ls ${{ inputs.package_name }}-*.whl) > new_wheel_list
         cat new_wheel_list | xargs -I % sh -c 'ls -l dist/%'
 
     - name: Choose wheels to upload
-      if: steps.aws-account-specified.outputs.specified
+      if: inputs.aws_account != ''
       shell: sh
       continue-on-error: ${{ inputs.dry_run == 'true' }}
       run: |
@@ -89,7 +77,7 @@ runs:
         cat upload_wheel_list
 
     - name: Upload wheels
-      if: steps.aws-account-specified.outputs.specified && inputs.dry_run == 'false'
+      if: inputs.aws_account != '' && inputs.dry_run == 'false'
       shell: sh
       run: |
         cat upload_wheel_list | xargs -I % sh -c 'aws s3 cp dist/% s3://download.chia.net/simple/${{ inputs.package_name }}/'
