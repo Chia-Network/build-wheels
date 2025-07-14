@@ -131,9 +131,9 @@ jobs:
       #     ref: 558df0d58d0e51e32d6b43dae5a9ce229387c4f6
       #     path: cloned
 
-      - name: Copy out miniupnpc
-        run: |
-          cp -R cloned/miniupnpc source
+      # - name: Copy out miniupnpc
+      #   run: |
+      #     cp -R cloned/miniupnpc source
 
       - name: Install tools
         if: matrix.os.matrix != 'windows'
