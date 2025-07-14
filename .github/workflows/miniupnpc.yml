@@ -133,7 +133,7 @@ jobs:
 
       - name: Copy out miniupnpc
         run: |
-          cp -R cloned/miniupnpc source
+          cp -RLv cloned/miniupnpc source
 
       - name: Install tools
         if: matrix.os.matrix != 'windows'
