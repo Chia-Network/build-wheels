@@ -138,7 +138,7 @@ jobs:
       - name: Install tools
         if: matrix.os.matrix != 'windows'
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==2.23.0
 
       - name: Build and test
         if: matrix.os.matrix != 'windows'
