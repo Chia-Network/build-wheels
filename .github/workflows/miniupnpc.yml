@@ -163,7 +163,7 @@ jobs:
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
 
           ls -l miniupnpc.dll
-          python -m delvewheel repair --add-path . --include miniupnpc.dll --wheel-target ../dist/ dist/*.whl
+          python -m delvewheel repair --add-path . --include miniupnpc.dll --wheel-dir ../dist/ dist/*.whl
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-test-venv
