@@ -116,24 +116,24 @@ jobs:
         with:
           directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
 
-      - name: Get source dist
-        run: |
-          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
-
-      - name: Untar
-        run: |
-          tar -xvzf packages/${{ env.name }}-*
-          mv ${{ env.name }}-* source
-
-      # - uses: actions/checkout@v4
-      #   with:
-      #     repository: Chia-Network/miniupnp
-      #     ref: 558df0d58d0e51e32d6b43dae5a9ce229387c4f6
-      #     path: cloned
-
-      # - name: Copy out miniupnpc
+      # - name: Get source dist
       #   run: |
-      #     cp -R cloned/miniupnpc source
+      #     pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+
+      # - name: Untar
+      #   run: |
+      #     tar -xvzf packages/${{ env.name }}-*
+      #     mv ${{ env.name }}-* source
+
+      - uses: actions/checkout@v4
+        with:
+          repository: miniupnp/miniupnp
+          ref: miniupnpc_2_3_3
+          path: cloned
+
+      - name: Copy out miniupnpc
+        run: |
+          cp -R cloned/miniupnpc source
 
       - name: Install tools
         if: matrix.os.matrix != 'windows'
