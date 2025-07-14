@@ -116,14 +116,14 @@ jobs:
         with:
           directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
 
-      # - name: Get source dist
-      #   run: |
-      #     pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+#      - name: Get source dist
+#        run: |
+#          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
-      # - name: Untar
-      #   run: |
-      #     tar -xvzf packages/${{ env.name }}-*
-      #     mv ${{ env.name }}-* source
+#      - name: Untar
+#        run: |
+#          tar -xvzf packages/${{ env.name }}-*
+#          mv ${{ env.name }}-* source
 
       - uses: actions/checkout@v4
         with:
