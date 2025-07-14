@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  default_version: '2.2.2'
+  default_version: '2.3.3'
   name: miniupnpc
   pip_options: '--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple'
 
@@ -127,18 +127,18 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: Chia-Network/miniupnp
-          ref: 558df0d58d0e51e32d6b43dae5a9ce229387c4f6
+          repository: miniupnp/miniupnp
+          ref: miniupnpc_2_3_3
           path: cloned
 
       - name: Copy out miniupnpc
         run: |
-          cp -R cloned/miniupnpc source
+          cp -RLv cloned/miniupnpc source
 
       - name: Install tools
         if: matrix.os.matrix != 'windows'
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==2.23.0
 
       - name: Build and test
         if: matrix.os.matrix != 'windows'
@@ -157,12 +157,13 @@ jobs:
         if: matrix.os.matrix == 'windows'
         run: |
           cd source
+          python -m pip install setuptools wheel delvewheel
+
           mingw32-make -f Makefile.mingw CC=gcc
-          python -m pip install setuptools wheel
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
-          7z a dist/*.whl miniupnpc.dll
-          mkdir ../dist
-          cp dist/*.whl ../dist
+
+          ls -l miniupnpc.dll
+          python -m delvewheel repair --add-path . --include miniupnpc.dll --wheel-dir ../dist/ dist/*.whl
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-test-venv
