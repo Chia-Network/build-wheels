@@ -162,7 +162,7 @@ jobs:
           mingw32-make -f Makefile.mingw CC=gcc
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
 
-          '%PYTHON_VER%\\python.exe -m delvewheel repair --add-path . --include miniupnpc.dll dist/*.whl'
+          python -m delvewheel repair --add-path . --include miniupnpc.dll dist/*.whl
 
           mkdir ../dist
           cp dist/*.whl ../dist
