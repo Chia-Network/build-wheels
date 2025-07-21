@@ -1,8 +1,9 @@
 name: "📦🚀 maturin"
 
 on:
-  # push:
-  #   branches:
+  push:
+    branches:
+      - __workflow_disabled__
   #   - long_lived/**
   #   - main
   #   - release/**
