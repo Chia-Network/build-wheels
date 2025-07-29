@@ -3,19 +3,20 @@ name: "📦🚀 maturin"
 on:
   push:
     branches:
-    - long_lived/**
-    - main
-    - release/**
-    tags:
-    - '**'
-  pull_request:
-    branches:
-    - '**'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "The version to build"
-        required: true
+      - __workflow_disabled__
+  #   - long_lived/**
+  #   - main
+  #   - release/**
+  #   tags:
+  #   - '**'
+  # pull_request:
+  #   branches:
+  #   - '**'
+  # workflow_dispatch:
+  #   inputs:
+  #     version:
+  #       description: "The version to build"
+  #       required: true
 
 concurrency:
     group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
