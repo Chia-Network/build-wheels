@@ -129,7 +129,7 @@ jobs:
 #          tar -xvzf packages/${{ env.name }}-*
 #          mv ${{ env.name }}-* source
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: miniupnp/miniupnp
           ref: miniupnpc_2_3_3
@@ -196,7 +196,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/upload
         with:
