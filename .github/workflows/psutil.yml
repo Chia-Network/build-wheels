@@ -67,10 +67,10 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: "3.10"
+          - major-dot-minor: "3.12"
             cibw-build: "cp310-*"
             manylinux: manylinux_2_28
-            matrix: "3.10"
+            matrix: "3.12"
         arch:
           - name: ARM
             file-name: arm
