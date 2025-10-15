@@ -3,14 +3,14 @@ name: "📦🚀 psutil"
 on:
   push:
     branches:
-    - long_lived/**
-    - main
-    - release/**
+      - long_lived/**
+      - main
+      - release/**
     tags:
-    - '**'
+      - "**"
   pull_request:
     branches:
-    - '**'
+      - "**"
   workflow_dispatch:
     inputs:
       version:
@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  default_version: '5.9.4'
+  default_version: "5.9.4"
 
 permissions:
   id-token: write
@@ -67,10 +67,10 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
+          - major-dot-minor: "3.10"
+            cibw-build: "cp310-*"
             manylinux: manylinux_2_28
-            matrix: '3.9'
+            matrix: "3.10"
         arch:
           - name: ARM
             file-name: arm
@@ -102,7 +102,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -138,7 +138,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+          CIBW_SKIP: "*-manylinux_i686 *-win32 *-musllinux_*"
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
         run: |
