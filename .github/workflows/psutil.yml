@@ -141,7 +141,7 @@ jobs:
           CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
-          CI_TESTING: "GITHUB_ACTIONS"
+          CI_TESTING: "CIBUILDWHEEL"
         run: |
           cibuildwheel source --output-dir dist
 
