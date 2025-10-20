@@ -88,11 +88,11 @@ pythonmodule:	libminiupnpc.a
 	$(PYTHON) setupmingw32.py install --skip-build
 	$(PYTHON) setupmingw32.py bdist_wheel --skip-build
 
-miniupnpc.dll:    miniupnpc.def $(OBJSDLL)
-    $(CC) -shared -o $@ $(OBJSDLL) $(LDLIBS) \
-    -Wl,--output-def,miniupnpc.dll.def \
-    -Wl,--out-implib,miniupnpc.lib \
-    miniupnpc.def
+miniupnpc.dll:	miniupnpc.def $(OBJSDLL)
+	$(CC) -shared -o $@ $(OBJSDLL) $(LDLIBS) \
+	-Wl,--output-def,miniupnpc.dll.def \
+	-Wl,--out-implib,miniupnpc.lib \
+	miniupnpc.def
 
 miniupnpc.lib:	miniupnpc.dll
 
