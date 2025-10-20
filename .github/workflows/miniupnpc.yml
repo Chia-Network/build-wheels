@@ -161,13 +161,13 @@ jobs:
         if: matrix.os.matrix == 'windows'
         run: |
           cd source
-          python -m pip install setuptools wheel delvewheel
+          python -m pip install setuptools wheel
 
           mingw32-make -f Makefile.mingw CC=gcc
           mingw32-make -f Makefile.mingw pythonmodule PYTHON=python
-
-          ls -l miniupnpc.dll
-          python -m delvewheel repair --add-path . --include miniupnpc.dll --wheel-dir ../dist/ dist/*.whl
+          7z a dist/*.whl miniupnpc.dll
+          mkdir ../dist
+          cp dist/*.whl ../dist
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-test-venv
