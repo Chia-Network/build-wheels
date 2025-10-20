@@ -131,6 +131,10 @@ jobs:
 
       - uses: actions/checkout@v5
         with:
+          path: buildwheels
+
+      - uses: actions/checkout@v5
+        with:
           repository: miniupnp/miniupnp
           ref: miniupnpc_2_3_3
           path: cloned
@@ -138,6 +142,10 @@ jobs:
       - name: Copy out miniupnpc
         run: |
           cp -RLv cloned/miniupnpc source
+          
+          # Set our version of the Makefile with dlltools for gcc change
+          rm source/Makefile.mingw
+          cp  buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
         if: matrix.os.matrix != 'windows'
