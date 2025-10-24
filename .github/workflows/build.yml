@@ -85,6 +85,10 @@ jobs:
             cibw-build: "cp313-*"
             manylinux: manylinux_2_28
             matrix: "3.13"
+          - major-dot-minor: "3.14"
+            cibw-build: "cp314-*"
+            manylinux: manylinux_2_28
+            matrix: "3.14"
         arch:
           - name: ARM
             file-name: arm
@@ -105,6 +109,9 @@ jobs:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.12') && 'exclude nothing' || '3.12' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.13') && 'exclude nothing' || '3.13' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.14') && 'exclude nothing' || '3.14' }}
+
 
     env:
       FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
