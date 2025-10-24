@@ -168,7 +168,6 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
-          CIBW_ENABLE: "pypy-eol"
         run: |
           cibuildwheel source --output-dir dist
 
