@@ -142,7 +142,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         env:
