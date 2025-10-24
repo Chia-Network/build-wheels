@@ -141,7 +141,6 @@ jobs:
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
-          CIBW_ENABLE: "pypy-eol"
         run: |
           cibuildwheel source --output-dir dist
 
