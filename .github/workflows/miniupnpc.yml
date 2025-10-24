@@ -85,6 +85,11 @@ jobs:
             cibw-build: "cp313-*"
             manylinux: manylinux_2_28
             matrix: "3.13"
+          - major-dot-minor: "3.14"
+            cibw-build: "cp314-*"
+            manylinux: manylinux_2_28
+            matrix: "3.14"
+
         arch:
           - name: ARM
             file-name: arm
@@ -144,9 +149,14 @@ jobs:
           cp  buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
-        if: matrix.os.matrix != 'windows'
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix == '3.10'
         run: |
-          pip install cibuildwheel==2.23.0
+          pip install cibuildwheel==2.23.3
+
+      - name: Install tools
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix != '3.10'
+        run: |
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         if: matrix.os.matrix != 'windows'
@@ -157,7 +167,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: "*-manylinux_i686 *-win32 *-musllinux_*"
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
         run: |
           cibuildwheel source --output-dir dist
 

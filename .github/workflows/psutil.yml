@@ -128,7 +128,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         env:
@@ -138,7 +138,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: "*-manylinux_i686 *-win32 *-musllinux_*"
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
         run: |
