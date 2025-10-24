@@ -149,7 +149,12 @@ jobs:
           cp  buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
-        if: matrix.os.matrix != 'windows'
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix == '3.10'
+        run: |
+          pip install cibuildwheel==2.23.3
+
+      - name: Install tools
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix != '3.10'
         run: |
           pip install cibuildwheel==3.2.1
 
