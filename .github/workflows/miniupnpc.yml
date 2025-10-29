@@ -188,7 +188,7 @@ jobs:
         run: |
           python -c 'import miniupnpc; print(miniupnpc)'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: wheel-${{ env.FILE_NAME }}
