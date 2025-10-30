@@ -59,6 +59,9 @@ jobs:
             matrix: "3.12"
           - major-dot-minor: "3.13"
             matrix: "3.13"
+          - major-dot-minor: "3.14"
+            matrix: "3.14"
+
         exclude:
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.10') && 'exclude nothing' || '3.10' }}
@@ -68,6 +71,8 @@ jobs:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.12') && 'exclude nothing' || '3.12' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.13') && 'exclude nothing' || '3.13' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.14') && 'exclude nothing' || '3.14' }}
 
     env:
       FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
