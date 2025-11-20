@@ -19,8 +19,8 @@ on:
   #       required: true
 
 concurrency:
-    group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
-    cancel-in-progress: true
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -38,4 +38,4 @@ jobs:
       distribution-name: uv
       import-name: uv
       version: ${{ inputs.version || '0.1.7' }}
-      only-major-dot-minor: '3.10'
+      only-major-dot-minor: "3.12"

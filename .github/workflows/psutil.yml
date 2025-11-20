@@ -3,14 +3,14 @@ name: "📦🚀 psutil"
 on:
   push:
     branches:
-    - long_lived/**
-    - main
-    - release/**
+      - long_lived/**
+      - main
+      - release/**
     tags:
-    - '**'
+      - "**"
   pull_request:
     branches:
-    - '**'
+      - "**"
   workflow_dispatch:
     inputs:
       version:
@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  default_version: '5.9.4'
+  default_version: "5.9.4"
 
 permissions:
   id-token: write
@@ -46,7 +46,7 @@ jobs:
             emoji: 🍎
             runs-on:
               arm: [macos-13-arm64]
-              intel: [macos-13]
+              intel: [macos-13-intel]
             cibw-archs-macos:
               arm: arm64
               intel: x86_64
@@ -67,10 +67,10 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
+          - major-dot-minor: "3.12"
+            cibw-build: "cp312-*"
             manylinux: manylinux_2_28
-            matrix: '3.9'
+            matrix: "3.12"
         arch:
           - name: ARM
             file-name: arm
@@ -102,7 +102,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -128,7 +128,7 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         env:
@@ -138,13 +138,13 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
           # skipping tests due to failures such as mentioned at https://github.com/giampaolo/psutil/issues/1972#issuecomment-1329780597
           CIBW_TEST_SKIP: "*-*linux_aarch64"
         run: |
           cibuildwheel source --output-dir dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: wheel-${{ env.FILE_NAME }}

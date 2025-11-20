@@ -13,18 +13,18 @@ on:
         required: true
         type: string
       pip_options:
-        default: ''
+        default: ""
         required: false
         type: string
       only-major-dot-minor:
-        default: 'include all'
+        default: "include all"
         required: false
         type: string
 
 concurrency:
-    # SHA is added to the end if on `main` to let all main workflows run
-    group: ${{ github.ref }}-${{ github.workflow }}-${{ inputs.distribution-name }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
-    cancel-in-progress: true
+  # SHA is added to the end if on `main` to let all main workflows run
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ inputs.distribution-name }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -69,26 +69,26 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
+          - major-dot-minor: "3.10"
+            cibw-build: "cp310-*"
             manylinux: manylinux_2_28
-            matrix: '3.9'
-          - major-dot-minor: '3.10'
-            cibw-build: 'cp310-*'
+            matrix: "3.10"
+          - major-dot-minor: "3.11"
+            cibw-build: "cp311-*"
             manylinux: manylinux_2_28
-            matrix: '3.10'
-          - major-dot-minor: '3.11'
-            cibw-build: 'cp311-*'
+            matrix: "3.11"
+          - major-dot-minor: "3.12"
+            cibw-build: "cp312-*"
             manylinux: manylinux_2_28
-            matrix: '3.11'
-          - major-dot-minor: '3.12'
-            cibw-build: 'cp312-*'
+            matrix: "3.12"
+          - major-dot-minor: "3.13"
+            cibw-build: "cp313-*"
             manylinux: manylinux_2_28
-            matrix: '3.12'
-          - major-dot-minor: '3.13'
-            cibw-build: 'cp313-*'
+            matrix: "3.13"
+          - major-dot-minor: "3.14"
+            cibw-build: "cp314-*"
             manylinux: manylinux_2_28
-            matrix: '3.13'
+            matrix: "3.14"
         arch:
           - name: ARM
             file-name: arm
@@ -102,8 +102,6 @@ jobs:
             arch:
               matrix: arm
           - python:
-              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.9') && 'exclude nothing' || '3.9' }}
-          - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.10') && 'exclude nothing' || '3.10' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.11') && 'exclude nothing' || '3.11' }}
@@ -111,6 +109,9 @@ jobs:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.12') && 'exclude nothing' || '3.12' }}
           - python:
               major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.13') && 'exclude nothing' || '3.13' }}
+          - python:
+              major-dot-minor: ${{ (inputs.only-major-dot-minor == 'include all' || inputs.only-major-dot-minor == '3.14') && 'exclude nothing' || '3.14' }}
+
 
     env:
       FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
@@ -140,8 +141,14 @@ jobs:
           mv ${{ inputs.distribution-name }}-* source
 
       - name: Install tools
+        if: matrix.python.matrix == '3.10'
         run: |
-          pip install cibuildwheel==2.19.2
+          pip install cibuildwheel==2.23.3
+
+      - name: Install tools
+        if: matrix.python.matrix != '3.10'
+        run: |
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         env:
@@ -151,7 +158,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
         run: |
           cibuildwheel source --output-dir dist
 
@@ -171,7 +178,7 @@ jobs:
         run: |
           python -c 'import ${{ inputs.import-name }}; print(${{ inputs.import-name }})'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: wheel-${{ env.FILE_NAME }}

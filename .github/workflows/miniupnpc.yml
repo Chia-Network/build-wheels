@@ -3,14 +3,14 @@ name: "📦🚀 miniupnpc"
 on:
   push:
     branches:
-    - long_lived/**
-    - main
-    - release/**
+      - long_lived/**
+      - main
+      - release/**
     tags:
-    - '**'
+      - "**"
   pull_request:
     branches:
-    - '**'
+      - "**"
   workflow_dispatch:
     inputs:
       version:
@@ -26,9 +26,9 @@ defaults:
     shell: bash
 
 env:
-  default_version: '2.3.3'
+  default_version: "2.3.3"
   name: miniupnpc
-  pip_options: '--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple'
+  pip_options: "--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple"
 
 permissions:
   id-token: write
@@ -69,26 +69,27 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: '3.9'
-            cibw-build: 'cp39-*'
+          - major-dot-minor: "3.10"
+            cibw-build: "cp310-*"
             manylinux: manylinux_2_28
-            matrix: '3.9'
-          - major-dot-minor: '3.10'
-            cibw-build: 'cp310-*'
+            matrix: "3.10"
+          - major-dot-minor: "3.11"
+            cibw-build: "cp311-*"
             manylinux: manylinux_2_28
-            matrix: '3.10'
-          - major-dot-minor: '3.11'
-            cibw-build: 'cp311-*'
+            matrix: "3.11"
+          - major-dot-minor: "3.12"
+            cibw-build: "cp312-*"
             manylinux: manylinux_2_28
-            matrix: '3.11'
-          - major-dot-minor: '3.12'
-            cibw-build: 'cp312-*'
+            matrix: "3.12"
+          - major-dot-minor: "3.13"
+            cibw-build: "cp313-*"
             manylinux: manylinux_2_28
-            matrix: '3.12'
-          - major-dot-minor: '3.13'
-            cibw-build: 'cp313-*'
+            matrix: "3.13"
+          - major-dot-minor: "3.14"
+            cibw-build: "cp314-*"
             manylinux: manylinux_2_28
-            matrix: '3.13'
+            matrix: "3.14"
+
         arch:
           - name: ARM
             file-name: arm
@@ -120,14 +121,18 @@ jobs:
         with:
           directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
 
-#      - name: Get source dist
-#        run: |
-#          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+      #      - name: Get source dist
+      #        run: |
+      #          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
 
-#      - name: Untar
-#        run: |
-#          tar -xvzf packages/${{ env.name }}-*
-#          mv ${{ env.name }}-* source
+      #      - name: Untar
+      #        run: |
+      #          tar -xvzf packages/${{ env.name }}-*
+      #          mv ${{ env.name }}-* source
+
+      - uses: actions/checkout@v5
+        with:
+          path: buildwheels
 
       - uses: actions/checkout@v5
         with:
@@ -138,11 +143,20 @@ jobs:
       - name: Copy out miniupnpc
         run: |
           cp -RLv cloned/miniupnpc source
+          
+          # Set our version of the Makefile with dlltools for gcc change
+          rm source/Makefile.mingw
+          cp  buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
-        if: matrix.os.matrix != 'windows'
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix == '3.10'
         run: |
-          pip install cibuildwheel==2.23.0
+          pip install cibuildwheel==2.23.3
+
+      - name: Install tools
+        if: matrix.os.matrix != 'windows' && matrix.python.matrix != '3.10'
+        run: |
+          pip install cibuildwheel==3.2.1
 
       - name: Build and test
         if: matrix.os.matrix != 'windows'
@@ -153,7 +167,7 @@ jobs:
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: '*-manylinux_i686 *-win32 *-musllinux_*'
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
         run: |
           cibuildwheel source --output-dir dist
 
@@ -184,7 +198,7 @@ jobs:
         run: |
           python -c 'import miniupnpc; print(miniupnpc)'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: wheel-${{ env.FILE_NAME }}
