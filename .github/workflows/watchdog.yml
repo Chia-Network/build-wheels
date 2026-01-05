@@ -54,25 +54,8 @@ jobs:
               arm: 13.0
               intel: 13.0
         python:
-          - major-dot-minor: "3.10"
-            cibw-build: "cp310-*"
-            manylinux: manylinux_2_28
-            matrix: "3.10"
-          - major-dot-minor: "3.11"
-            cibw-build: "cp311-*"
-            manylinux: manylinux_2_28
-            matrix: "3.11"
-          - major-dot-minor: "3.12"
-            cibw-build: "cp312-*"
-            manylinux: manylinux_2_28
-            matrix: "3.12"
-          - major-dot-minor: "3.13"
-            cibw-build: "cp313-*"
-            manylinux: manylinux_2_28
-            matrix: "3.13"
           - major-dot-minor: "3.14"
             cibw-build: "cp314-*"
-            manylinux: manylinux_2_28
             matrix: "3.14"
         arch:
           - name: ARM
@@ -110,12 +93,6 @@ jobs:
           mv watchdog-* source
 
       - name: Install tools
-        if: matrix.python.matrix == '3.10'
-        run: |
-          pip install cibuildwheel==2.23.3
-
-      - name: Install tools
-        if: matrix.python.matrix != '3.10'
         run: |
           pip install cibuildwheel==3.2.1
 
