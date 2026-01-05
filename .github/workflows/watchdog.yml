@@ -1,0 +1,39 @@
+name: "📦🚀 zstd"
+
+on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: true
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      distribution-name: watchdog
+      import-name: watchdog
+      version: ${{ inputs.version || '6.0.0' }}
