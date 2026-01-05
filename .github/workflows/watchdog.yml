@@ -25,15 +25,144 @@ defaults:
   run:
     shell: bash
 
+env:
+  default_version: "6.0.0"
+
 permissions:
   id-token: write
   contents: read
 
 jobs:
   build:
-    uses: ./.github/workflows/build.yml
-    secrets: inherit
-    with:
-      distribution-name: watchdog
-      import-name: watchdog
-      version: ${{ inputs.version || '6.0.0' }}
+    name: ${{ matrix.os.emoji }} 📦 Build ${{ matrix.arch.name }} ${{ matrix.python.major-dot-minor }}
+    runs-on: ${{ matrix.os.runs-on[matrix.arch.matrix] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: macOS
+            file-name: macos
+            matrix: macos
+            emoji: 🍎
+            runs-on:
+              arm: [macos-13-arm64]
+              intel: [macos-15-intel]
+            cibw-archs-macos:
+              arm: arm64
+              intel: x86_64
+            macosx-deployment-target:
+              arm: 13.0
+              intel: 13.0
+        python:
+          - major-dot-minor: "3.10"
+            cibw-build: "cp310-*"
+            manylinux: manylinux_2_28
+            matrix: "3.10"
+          - major-dot-minor: "3.11"
+            cibw-build: "cp311-*"
+            manylinux: manylinux_2_28
+            matrix: "3.11"
+          - major-dot-minor: "3.12"
+            cibw-build: "cp312-*"
+            manylinux: manylinux_2_28
+            matrix: "3.12"
+          - major-dot-minor: "3.13"
+            cibw-build: "cp313-*"
+            manylinux: manylinux_2_28
+            matrix: "3.13"
+          - major-dot-minor: "3.14"
+            cibw-build: "cp314-*"
+            manylinux: manylinux_2_28
+            matrix: "3.14"
+        arch:
+          - name: ARM
+            file-name: arm
+            matrix: arm
+          - name: Intel
+            file-name: intel
+            matrix: intel
+
+    env:
+      FILE_NAME: ${{ matrix.os.file-name }}-${{ matrix.arch.file-name }}-${{ matrix.python.major-dot-minor }}
+
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: ${{ matrix.python.major-dot-minor }}
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+      - name: Get source dist
+        run: |
+          pip download --no-deps --no-binary :all: --dest packages watchdog==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+
+      - name: Untar
+        run: |
+          tar -xvzf packages/watchdog-*
+          mv watchdog-* source
+
+      - name: Install tools
+        if: matrix.python.matrix == '3.10'
+        run: |
+          pip install cibuildwheel==2.23.3
+
+      - name: Install tools
+        if: matrix.python.matrix != '3.10'
+        run: |
+          pip install cibuildwheel==3.2.1
+
+      - name: Build and test
+        env:
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
+          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
+        run: |
+          cibuildwheel source --output-dir dist
+
+      - uses: chia-network/actions/create-venv@main
+        id: create-test-venv
+
+      - uses: chia-network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+
+      - name: Install
+        run: |
+          ls -la dist
+          python -m pip install --no-index --only-binary :all: --find-links dist watchdog
+
+      - name: Import
+        run: |
+          python -c 'import watchdog; print(watchdog)'
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: wheel-${{ env.FILE_NAME }}
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: watchdog
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
