@@ -45,7 +45,7 @@ runs:
 
     - name: Configure AWS credentials
       if: inputs.aws_account != ''
-      uses: aws-actions/configure-aws-credentials@v5
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account }}:role/${{ inputs.aws_role }}
         aws-region: us-west-2
