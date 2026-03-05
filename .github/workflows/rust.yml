@@ -132,7 +132,7 @@ jobs:
           pip wheel -vvv --only-binary :all: --extra-index-url https://pypi.chia.net/simple/ -w dist ./source \
           '
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: wheel-${{ env.FILE_NAME }}
