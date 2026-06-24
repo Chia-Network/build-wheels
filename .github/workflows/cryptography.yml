@@ -71,6 +71,11 @@ jobs:
         run: |
           pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event.inputs.version || env.default_version }}
 
+      - name: Untar source for tests
+        run: |
+          tar -xzf packages/cryptography-*.tar.gz
+          mv cryptography-* source
+
       - name: Install uv
         run: pip install uv
 
@@ -152,6 +157,11 @@ jobs:
               print(f"OpenSSL version mismatch: expected {expected!r}, got {linked!r}", file=sys.stderr)
               sys.exit(1)
           EOF
+
+      - name: Run tests
+        run: |
+          pip install cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend
+          pytest source/tests --rootdir=source --ignore=source/tests/bench
 
       - uses: actions/upload-artifact@v7
         if: always()
