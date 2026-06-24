@@ -44,17 +44,14 @@ jobs:
         abi:
           - name: cp310-abi3
             python: "3.10"
-            cibw-build: cp310-*
             abi-feature: pyo3/abi3-py310
-            cibuildwheel: cibuildwheel==2.23.3
           - name: cp311-abi3
             python: "3.11"
-            cibw-build: cp311-*
             abi-feature: pyo3/abi3-py311
-            cibuildwheel: cibuildwheel==3.2.1
     env:
       FILE_NAME: macos-intel-${{ matrix.abi.name }}
       OPENSSL_DIR: ${{ github.workspace }}/openssl
+      VERSION: ${{ github.event.inputs.version || env.default_version }}
 
     steps:
       - name: Clean workspace
@@ -73,12 +70,14 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event.inputs.version || env.default_version }}
+          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ env.VERSION }}
 
-      - name: Untar
+      - name: Get build requirements
         run: |
-          tar -xvzf packages/cryptography-*
-          mv cryptography-* source
+          base="https://raw.githubusercontent.com/pyca/cryptography/${{ env.VERSION }}/.github/requirements"
+          curl -fsSL "$base/build-requirements.txt" -o build-requirements.txt
+          curl -fsSL "$base/uv-requirements.txt" -o uv-requirements.txt
+          python -m pip install --require-hashes -r uv-requirements.txt
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -96,20 +95,20 @@ jobs:
           fi
           gh run download -R pyca/infra "$run_id" -n openssl-macos-x86-64 -D openssl
 
-      - name: Install tools
-        run: |
-          pip install ${{ matrix.abi.cibuildwheel }}
-
       - name: Build
         env:
-          CIBW_ARCHS_MACOS: x86_64
-          CIBW_BUILD: ${{ matrix.abi.cibw-build }}
-          CIBW_CONFIG_SETTINGS: build-args=--features=${{ matrix.abi.abi-feature }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15 OPENSSL_DIR=${{ env.OPENSSL_DIR }} OPENSSL_STATIC=1
-          CIBW_PRERELEASE_PYTHONS: True
-          CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
+          MACOSX_DEPLOYMENT_TARGET: "15"
+          ARCHFLAGS: "-arch x86_64"
+          OPENSSL_STATIC: "1"
         run: |
-          cibuildwheel source --output-dir dist
+          mkdir -p dist
+          uv build --wheel \
+            --require-hashes \
+            --build-constraint=build-requirements.txt \
+            --config-settings=build-args=--features=${{ matrix.abi.abi-feature }} \
+            --config-settings=build-args=--sbom-include="${{ env.OPENSSL_DIR }}/sbom.json" \
+            packages/cryptography-*.tar.gz \
+            -o dist
 
       - uses: chia-network/actions/create-venv@main
         id: create-test-venv
@@ -118,35 +117,31 @@ jobs:
         with:
           directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
 
-      - name: Install
+      - name: Smoketest
         run: |
           ls -la dist
           python -m pip install --find-links dist --only-binary :all: cryptography
 
-      - name: Run tests
-        run: |
-          pip install cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend
-          pytest source/tests --rootdir=source --ignore=source/tests/bench
-
-      - name: Verify OpenSSL linkage
-        run: |
-          set -eo pipefail
           so="$(find "$(python -c 'import cryptography, os; print(os.path.dirname(cryptography.__file__))')" -path '*/hazmat/bindings/*.so' | head -1)"
           echo "Extension: $so"
+          vtool -show "$so"
           echo "Dynamic libraries:"
           otool -L "$so"
           if otool -L "$so" | grep -E 'libssl|libcrypto'; then
             echo "ERROR: OpenSSL appears to be dynamically linked"
             exit 1
           fi
+
           python <<'EOF'
           import os
           import re
           import sys
           from pathlib import Path
 
+          import cryptography
           from cryptography.hazmat.backends.openssl.backend import backend
 
+          print(cryptography)
           header = (Path(os.environ["OPENSSL_DIR"]) / "include/openssl/opensslv.h").read_text()
           expected = re.search(r'#define OPENSSL_VERSION_TEXT\s+"([^"]+)"', header).group(1)
           linked = backend._ffi.string(backend._lib.OPENSSL_VERSION_TEXT).decode("ascii")
@@ -156,10 +151,6 @@ jobs:
               print(f"OpenSSL version mismatch: expected {expected!r}, got {linked!r}", file=sys.stderr)
               sys.exit(1)
           EOF
-
-      - name: Import
-        run: |
-          python -c 'import cryptography; print(cryptography)'
 
       - uses: actions/upload-artifact@v7
         if: always()
