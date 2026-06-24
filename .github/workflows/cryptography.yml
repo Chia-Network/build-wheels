@@ -15,7 +15,9 @@ on:
     inputs:
       version:
         description: "The version to build"
-        required: true
+        required: false
+        default: "49.0.0"
+        type: string
 
 concurrency:
     group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
@@ -31,7 +33,6 @@ env:
 permissions:
   id-token: write
   contents: read
-  actions: read
 
 jobs:
   build:
@@ -78,27 +79,32 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event.inputs.version || env.default_version }}
 
       - name: Untar
         run: |
           tar -xvzf packages/cryptography-*
           mv cryptography-* source
 
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
+      - name: Install Rust
+        run: |
+          if ! command -v rustc >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+          rustc --version
 
       - name: Get OpenSSL
-        uses: dawidd6/action-download-artifact@v11
-        with:
-          repo: pyca/infra
-          workflow: build-macos-openssl.yml
-          branch: main
-          workflow_conclusion: success
-          name: openssl-macos-x86-64
-          path: openssl
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eo pipefail
+          run_id="$(gh run list -R pyca/infra --workflow=build-macos-openssl.yml --branch=main --limit=20 --json databaseId,conclusion -q '.[] | select(.conclusion=="success") | .databaseId' | head -1)"
+          if [ -z "$run_id" ]; then
+            echo "No successful OpenSSL build run found in pyca/infra"
+            exit 1
+          fi
+          gh run download -R pyca/infra "$run_id" -n openssl-macos-x86-64 -D openssl
 
       - name: Install tools
         if: matrix.python.matrix == '3.10'
