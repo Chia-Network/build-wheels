@@ -135,8 +135,16 @@ jobs:
           from cryptography.hazmat.backends.openssl.backend import backend
 
           print(cryptography)
-          header = (Path(os.environ["OPENSSL_DIR"]) / "include/openssl/opensslv.h").read_text()
-          expected = re.search(r'#define OPENSSL_VERSION_TEXT\s+"([^"]+)"', header).group(1)
+          header_path = Path(os.environ["OPENSSL_DIR"]) / "include/openssl/opensslv.h"
+          if not header_path.is_file():
+              print(f"OpenSSL header not found: {header_path}", file=sys.stderr)
+              sys.exit(1)
+          header = header_path.read_text()
+          match = re.search(r'#\s*define\s+OPENSSL_VERSION_TEXT\s+"([^"]+)"', header)
+          if match is None:
+              print(f"Could not parse OPENSSL_VERSION_TEXT from {header_path}", file=sys.stderr)
+              sys.exit(1)
+          expected = match.group(1)
           linked = backend._ffi.string(backend._lib.OPENSSL_VERSION_TEXT).decode("ascii")
           print(f"Expected OpenSSL: {expected}")
           print(f"Runtime OpenSSL:  {linked}")
