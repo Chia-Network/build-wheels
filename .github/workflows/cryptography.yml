@@ -92,7 +92,7 @@ jobs:
 
       - name: Build
         env:
-          MACOSX_DEPLOYMENT_TARGET: "15"
+          MACOSX_DEPLOYMENT_TARGET: "15.0"
           ARCHFLAGS: "-arch x86_64"
           OPENSSL_STATIC: "1"
         run: |
