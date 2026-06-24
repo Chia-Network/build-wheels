@@ -72,12 +72,8 @@ jobs:
         run: |
           pip download --no-deps --no-binary :all: --dest packages cryptography==${{ env.VERSION }}
 
-      - name: Get build requirements
-        run: |
-          base="https://raw.githubusercontent.com/pyca/cryptography/${{ env.VERSION }}/.github/requirements"
-          curl -fsSL "$base/build-requirements.txt" -o build-requirements.txt
-          curl -fsSL "$base/uv-requirements.txt" -o uv-requirements.txt
-          python -m pip install --require-hashes -r uv-requirements.txt
+      - name: Install uv
+        run: pip install uv
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -103,8 +99,6 @@ jobs:
         run: |
           mkdir -p dist
           uv build --wheel \
-            --require-hashes \
-            --build-constraint=build-requirements.txt \
             --config-settings=build-args=--features=${{ matrix.abi.abi-feature }} \
             --config-settings=build-args=--sbom-include="${{ env.OPENSSL_DIR }}/sbom.json" \
             packages/cryptography-*.tar.gz \
