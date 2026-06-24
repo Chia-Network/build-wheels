@@ -36,30 +36,10 @@ permissions:
 
 jobs:
   build:
-    name: 🍎 📦 Build Intel ${{ matrix.python.major-dot-minor }}
+    name: 🍎 📦 Build Intel cp311-abi3
     runs-on: macos-15-intel
-    strategy:
-      fail-fast: false
-      matrix:
-        python:
-          - major-dot-minor: "3.10"
-            cibw-build: "cp310-*"
-            matrix: "3.10"
-          - major-dot-minor: "3.11"
-            cibw-build: "cp311-*"
-            matrix: "3.11"
-          - major-dot-minor: "3.12"
-            cibw-build: "cp312-*"
-            matrix: "3.12"
-          - major-dot-minor: "3.13"
-            cibw-build: "cp313-*"
-            matrix: "3.13"
-          - major-dot-minor: "3.14"
-            cibw-build: "cp314-*"
-            matrix: "3.14"
-
     env:
-      FILE_NAME: macos-intel-${{ matrix.python.major-dot-minor }}
+      FILE_NAME: macos-intel-cp311-abi3
       OPENSSL_DIR: ${{ github.workspace }}/openssl
 
     steps:
@@ -68,7 +48,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: ${{ matrix.python.major-dot-minor }}
+          python-version: "3.11"
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -107,22 +87,18 @@ jobs:
           gh run download -R pyca/infra "$run_id" -n openssl-macos-x86-64 -D openssl
 
       - name: Install tools
-        if: matrix.python.matrix == '3.10'
-        run: |
-          pip install cibuildwheel==2.23.3
-
-      - name: Install tools
-        if: matrix.python.matrix != '3.10'
         run: |
           pip install cibuildwheel==3.2.1
 
       - name: Build and test
         env:
           CIBW_ARCHS_MACOS: x86_64
-          CIBW_BUILD: ${{ matrix.python.cibw-build }}
+          CIBW_BUILD: cp311-*
+          CIBW_CONFIG_SETTINGS: build-args=--features=pyo3/abi3-py311
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15 OPENSSL_DIR=${{ env.OPENSSL_DIR }} OPENSSL_STATIC=1
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
+          CIBW_TEST_REQUIRES: "cffi>=2.0.0"
         run: |
           cibuildwheel source --output-dir dist
 
@@ -136,7 +112,7 @@ jobs:
       - name: Install
         run: |
           ls -la dist
-          python -m pip install --no-index --only-binary :all: --find-links dist cryptography
+          python -m pip install --find-links dist --only-binary :all: cryptography
 
       - name: Import
         run: |
