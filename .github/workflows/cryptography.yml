@@ -80,13 +80,9 @@ jobs:
           tar -xvzf packages/cryptography-*
           mv cryptography-* source
 
-      - name: Install Rust
-        run: |
-          if ! command -v rustc >/dev/null 2>&1; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          fi
-          rustc --version
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
 
       - name: Get OpenSSL
         env:
