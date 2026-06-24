@@ -36,10 +36,24 @@ permissions:
 
 jobs:
   build:
-    name: 🍎 📦 Build Intel cp311-abi3
+    name: 🍎 📦 Build Intel ${{ matrix.abi.name }}
     runs-on: macos-15-intel
+    strategy:
+      fail-fast: false
+      matrix:
+        abi:
+          - name: cp310-abi3
+            python: "3.10"
+            cibw-build: cp310-*
+            abi-feature: pyo3/abi3-py310
+            cibuildwheel: cibuildwheel==2.23.3
+          - name: cp311-abi3
+            python: "3.11"
+            cibw-build: cp311-*
+            abi-feature: pyo3/abi3-py311
+            cibuildwheel: cibuildwheel==3.2.1
     env:
-      FILE_NAME: macos-intel-cp311-abi3
+      FILE_NAME: macos-intel-${{ matrix.abi.name }}
       OPENSSL_DIR: ${{ github.workspace }}/openssl
 
     steps:
@@ -48,7 +62,7 @@ jobs:
 
       - uses: Chia-Network/actions/setup-python@main
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.abi.python }}
 
       - uses: Chia-Network/actions/create-venv@main
         id: create-venv
@@ -88,13 +102,13 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==3.2.1
+          pip install ${{ matrix.abi.cibuildwheel }}
 
       - name: Build and test
         env:
           CIBW_ARCHS_MACOS: x86_64
-          CIBW_BUILD: cp311-*
-          CIBW_CONFIG_SETTINGS: build-args=--features=pyo3/abi3-py311
+          CIBW_BUILD: ${{ matrix.abi.cibw-build }}
+          CIBW_CONFIG_SETTINGS: build-args=--features=${{ matrix.abi.abi-feature }}
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15 OPENSSL_DIR=${{ env.OPENSSL_DIR }} OPENSSL_STATIC=1
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
