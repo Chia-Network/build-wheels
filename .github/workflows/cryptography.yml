@@ -51,7 +51,6 @@ jobs:
     env:
       FILE_NAME: macos-intel-${{ matrix.abi.name }}
       OPENSSL_DIR: ${{ github.workspace }}/openssl
-      VERSION: ${{ github.event.inputs.version || env.default_version }}
 
     steps:
       - name: Clean workspace
@@ -70,7 +69,7 @@ jobs:
 
       - name: Get source dist
         run: |
-          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ env.VERSION }}
+          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event.inputs.version || env.default_version }}
 
       - name: Install uv
         run: pip install uv
