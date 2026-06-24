@@ -84,17 +84,15 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Get OpenSSL
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eo pipefail
-          run_id="$(gh run list -R pyca/infra --workflow=build-macos-openssl.yml --branch=main --limit=20 --json databaseId,conclusion -q '.[] | select(.conclusion=="success") | .databaseId' | head -1)"
-          if [ -z "$run_id" ]; then
-            echo "No successful OpenSSL build run found in pyca/infra"
-            exit 1
-          fi
-          gh run download -R pyca/infra "$run_id" -n openssl-macos-x86-64 -D openssl
+      - uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
+        with:
+          repo: pyca/infra
+          workflow: build-macos-openssl.yml
+          branch: main
+          workflow_conclusion: success
+          name: openssl-macos-x86-64
+          path: openssl
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install tools
         run: |
@@ -108,7 +106,8 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15 OPENSSL_DIR=${{ env.OPENSSL_DIR }} OPENSSL_STATIC=1
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
-          CIBW_TEST_REQUIRES: "cffi>=2.0.0"
+          CIBW_TEST_REQUIRES: "cffi>=2.0.0 cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend"
+          CIBW_TEST_COMMAND: "pytest {project}/tests --rootdir={project} --ignore={project}/tests/bench"
         run: |
           cibuildwheel source --output-dir dist
 
@@ -123,6 +122,35 @@ jobs:
         run: |
           ls -la dist
           python -m pip install --find-links dist --only-binary :all: cryptography
+
+      - name: Verify OpenSSL linkage
+        run: |
+          set -eo pipefail
+          so="$(find "$(python -c 'import cryptography, os; print(os.path.dirname(cryptography.__file__))')" -path '*/hazmat/bindings/*.so' | head -1)"
+          echo "Extension: $so"
+          echo "Dynamic libraries:"
+          otool -L "$so"
+          if otool -L "$so" | grep -E 'libssl|libcrypto'; then
+            echo "ERROR: OpenSSL appears to be dynamically linked"
+            exit 1
+          fi
+          python <<'EOF'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          from cryptography.hazmat.backends.openssl.backend import backend
+
+          header = (Path(os.environ["OPENSSL_DIR"]) / "include/openssl/opensslv.h").read_text()
+          expected = re.search(r'#define OPENSSL_VERSION_TEXT\s+"([^"]+)"', header).group(1)
+          linked = backend._ffi.string(backend._lib.OPENSSL_VERSION_TEXT).decode("ascii")
+          print(f"Expected OpenSSL: {expected}")
+          print(f"Runtime OpenSSL:  {linked}")
+          if linked != expected:
+              print(f"OpenSSL version mismatch: expected {expected!r}, got {linked!r}", file=sys.stderr)
+              sys.exit(1)
+          EOF
 
       - name: Import
         run: |
