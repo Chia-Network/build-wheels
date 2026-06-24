@@ -100,7 +100,7 @@ jobs:
         run: |
           pip install ${{ matrix.abi.cibuildwheel }}
 
-      - name: Build and test
+      - name: Build
         env:
           CIBW_ARCHS_MACOS: x86_64
           CIBW_BUILD: ${{ matrix.abi.cibw-build }}
@@ -108,8 +108,6 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=15 OPENSSL_DIR=${{ env.OPENSSL_DIR }} OPENSSL_STATIC=1
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
-          CIBW_TEST_REQUIRES: "cffi>=2.0.0 cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend"
-          CIBW_TEST_COMMAND: "pytest {project}/tests --rootdir={project} --ignore={project}/tests/bench"
         run: |
           cibuildwheel source --output-dir dist
 
@@ -124,6 +122,11 @@ jobs:
         run: |
           ls -la dist
           python -m pip install --find-links dist --only-binary :all: cryptography
+
+      - name: Run tests
+        run: |
+          pip install cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend
+          pytest source/tests --rootdir=source --ignore=source/tests/bench
 
       - name: Verify OpenSSL linkage
         run: |
