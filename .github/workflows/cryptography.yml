@@ -1,0 +1,186 @@
+name: "📦🚀 cryptography"
+
+on:
+  push:
+    branches:
+    - long_lived/**
+    - main
+    - release/**
+    tags:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build"
+        required: false
+        default: "49.0.0"
+        type: string
+
+concurrency:
+    group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/long_lived/')) && github.sha || '' }}
+    cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  default_version: "49.0.0"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    name: 🍎 📦 Build Intel ${{ matrix.abi.name }}
+    runs-on: macos-15-intel
+    strategy:
+      fail-fast: false
+      matrix:
+        abi:
+          - name: cp310-abi3
+            python: "3.10"
+            abi-feature: pyo3/abi3-py310
+          - name: cp311-abi3
+            python: "3.11"
+            abi-feature: pyo3/abi3-py311
+    env:
+      FILE_NAME: macos-intel-${{ matrix.abi.name }}
+      OPENSSL_DIR: ${{ github.workspace }}/openssl
+
+    steps:
+      - name: Clean workspace
+        uses: Chia-Network/actions/clean-workspace@main
+
+      - uses: Chia-Network/actions/setup-python@main
+        with:
+          python-version: ${{ matrix.abi.python }}
+
+      - uses: Chia-Network/actions/create-venv@main
+        id: create-venv
+
+      - uses: Chia-Network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
+
+      - name: Get source dist
+        run: |
+          pip download --no-deps --no-binary :all: --dest packages cryptography==${{ github.event.inputs.version || env.default_version }}
+
+      - name: Untar source for tests
+        run: |
+          tar -xzf packages/cryptography-*.tar.gz
+          mv cryptography-* source
+
+      - name: Install uv
+        run: pip install uv
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Get OpenSSL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eo pipefail
+          run_id="$(gh run list -R pyca/infra --workflow=build-macos-openssl.yml --branch=main --limit=20 --json databaseId,conclusion -q '.[] | select(.conclusion=="success") | .databaseId' | head -1)"
+          if [ -z "$run_id" ]; then
+            echo "No successful OpenSSL build run found in pyca/infra"
+            exit 1
+          fi
+          gh run download -R pyca/infra "$run_id" -n openssl-macos-x86-64 -D openssl
+
+      - name: Build
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "15.0"
+          ARCHFLAGS: "-arch x86_64"
+          OPENSSL_STATIC: "1"
+        run: |
+          mkdir -p dist
+          uv build --wheel \
+            --config-settings=build-args=--features=${{ matrix.abi.abi-feature }} \
+            --config-settings=build-args=--sbom-include="${{ env.OPENSSL_DIR }}/sbom.json" \
+            packages/cryptography-*.tar.gz \
+            -o dist
+
+      - uses: chia-network/actions/create-venv@main
+        id: create-test-venv
+
+      - uses: chia-network/actions/activate-venv@main
+        with:
+          directories: ${{ steps.create-test-venv.outputs.activate-venv-directories }}
+
+      - name: Smoketest
+        run: |
+          ls -la dist
+          python -m pip install --find-links dist --only-binary :all: cryptography
+
+          so="$(find "$(python -c 'import cryptography, os; print(os.path.dirname(cryptography.__file__))')" -path '*/hazmat/bindings/*.so' | head -1)"
+          echo "Extension: $so"
+          vtool -show "$so"
+          echo "Dynamic libraries:"
+          otool -L "$so"
+          if otool -L "$so" | grep -E 'libssl|libcrypto'; then
+            echo "ERROR: OpenSSL appears to be dynamically linked"
+            exit 1
+          fi
+
+          python <<'EOF'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          import cryptography
+          from cryptography.hazmat.backends.openssl.backend import backend
+
+          print(cryptography)
+          header_path = Path(os.environ["OPENSSL_DIR"]) / "include/openssl/opensslv.h"
+          if not header_path.is_file():
+              print(f"OpenSSL header not found: {header_path}", file=sys.stderr)
+              sys.exit(1)
+          header = header_path.read_text()
+          match = re.search(r'#\s*define\s+OPENSSL_VERSION_TEXT\s+"([^"]+)"', header)
+          if match is None:
+              print(f"Could not parse OPENSSL_VERSION_TEXT from {header_path}", file=sys.stderr)
+              sys.exit(1)
+          expected = match.group(1)
+          linked = backend._ffi.string(backend._lib.OPENSSL_VERSION_TEXT).decode("ascii")
+          print(f"Expected OpenSSL: {expected}")
+          print(f"Runtime OpenSSL:  {linked}")
+          if linked != expected:
+              print(f"OpenSSL version mismatch: expected {expected!r}, got {linked!r}", file=sys.stderr)
+              sys.exit(1)
+          EOF
+
+      - name: Run tests
+        run: |
+          pip install cryptography_vectors==${{ github.event.inputs.version || env.default_version }} pytest>=7.4.0 pytest-benchmark>=4.0 pretend
+          pytest source/tests --rootdir=source --ignore=source/tests/bench
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: wheel-${{ env.FILE_NAME }}
+          path: ./dist
+          if-no-files-found: error
+
+  upload:
+    name: 🚀 Upload
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/upload
+        with:
+          package_name: cryptography
+          artifact_name: wheel
+          dry_run: ${{ github.event_name != 'workflow_dispatch' }}
+          vault_url: ${{ secrets.VAULT_URL }}
+          aws_account: ${{ secrets.CHIA_AWS_ACCOUNT_ID }}
