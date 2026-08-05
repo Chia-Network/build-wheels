@@ -38,13 +38,9 @@ runs:
         if-no-files-found: error
 
     - name: Install AWS CLI
-      env:
-        AWS_CLI_VERSION: "2.36.16"
       shell: sh
       run: |
-        curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m)-${AWS_CLI_VERSION}.zip" -o awscliv2.zip
-        unzip -oq awscliv2.zip
-        ./aws/install --update
+        curl -fsSL https://awscli.amazonaws.com/v2/install.sh | sudo bash -s -- --system
         aws --version
 
     - name: Configure AWS credentials
