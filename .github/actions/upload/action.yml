@@ -38,10 +38,13 @@ runs:
         if-no-files-found: error
 
     - name: Install AWS CLI
-      shell: sh
+      shell: bash
       run: |
-        curl -fsSL https://awscli.amazonaws.com/v2/install.sh | sudo bash -s -- --system
+        set -euo pipefail
+        curl -fsSL https://awscli.amazonaws.com/v2/install.sh -o /tmp/aws-install.sh
+        sudo bash /tmp/aws-install.sh --system
         aws --version
+
 
     - name: Configure AWS credentials
       if: inputs.aws_account != ''
