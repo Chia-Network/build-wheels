@@ -187,6 +187,7 @@ jobs:
 
   sdist:
     uses: ./.github/workflows/sdist.yml
+    continue-on-error: true
     with:
       distribution-name: ${{ inputs.distribution-name }}
       version: ${{ inputs.version }}
@@ -197,6 +198,7 @@ jobs:
     needs:
       - build
       - sdist
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     steps:
       - uses: actions/checkout@v7
 

@@ -131,6 +131,7 @@ jobs:
 
   sdist:
     uses: ./.github/workflows/sdist.yml
+    continue-on-error: true
     with:
       distribution-name: watchdog
       version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '6.0.0' }}
@@ -141,6 +142,7 @@ jobs:
     needs:
       - build
       - sdist
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     steps:
       - uses: actions/checkout@v7
 

@@ -32,9 +32,19 @@ runs:
         merge-multiple: true
 
     - uses: actions/download-artifact@v8
+      continue-on-error: true
       with:
         name: sdist
         path: ./dist
+
+    - name: Warn if sdist is missing
+      shell: bash
+      run: |
+        shopt -s nullglob
+        sdists=(dist/*.tar.gz dist/*.zip)
+        if [ ${#sdists[@]} -eq 0 ]; then
+          echo "::warning::No PyPI sdist artifact found; uploading wheels only"
+        fi
 
     - uses: actions/upload-artifact@v7
       with:
