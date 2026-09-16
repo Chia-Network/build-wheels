@@ -124,19 +124,40 @@ jobs:
         with:
           path: buildwheels
 
-      - name: Get source dist
+      - name: Resolve version
+        id: version
         run: |
-          pip download --index-url https://pypi.org/simple --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
+          version="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "git-ref=miniupnpc_${version//./_}" >> "$GITHUB_OUTPUT"
+
+      - name: Get source dist
+        if: matrix.os.matrix != 'windows'
+        run: |
+          pip download --index-url https://pypi.org/simple --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ steps.version.outputs.version }}
 
       - name: Untar
+        if: matrix.os.matrix != 'windows'
         run: |
           tar -xvzf packages/${{ env.name }}-*
           mv ${{ env.name }}-* source
 
-      - name: Apply Windows Makefile.mingw patch
+      # The sdist ships only the portable sources, so the mingw build inputs
+      # (wingenminiupnpcstrings.c, miniupnpc.def, miniupnpc.rc) are missing.
+      - uses: actions/checkout@v7
+        if: matrix.os.matrix == 'windows'
+        with:
+          repository: miniupnp/miniupnp
+          ref: ${{ steps.version.outputs.git-ref }}
+          path: cloned
+
+      - name: Copy out miniupnpc
+        if: matrix.os.matrix == 'windows'
         run: |
-          # dlltools for gcc; keep overlaying our copy regardless of sdist contents
-          rm -f source/Makefile.mingw
+          cp -RLv cloned/miniupnpc source
+
+          # Set our version of the Makefile with dlltools for gcc change
+          rm source/Makefile.mingw
           cp buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
