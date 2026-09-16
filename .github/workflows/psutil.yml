@@ -153,7 +153,6 @@ jobs:
 
   sdist:
     uses: ./.github/workflows/sdist.yml
-    continue-on-error: true
     with:
       distribution-name: psutil
       version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '5.9.4' }}
