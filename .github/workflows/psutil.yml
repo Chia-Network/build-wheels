@@ -151,10 +151,20 @@ jobs:
           path: ./dist
           if-no-files-found: error
 
+  sdist:
+    uses: ./.github/workflows/sdist.yml
+    continue-on-error: true
+    with:
+      distribution-name: psutil
+      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '5.9.4' }}
+
   upload:
     name: 🚀 Upload
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - sdist
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     steps:
       - uses: actions/checkout@v7
 
