@@ -205,10 +205,18 @@ jobs:
           path: ./dist
           if-no-files-found: error
 
+  sdist:
+    uses: ./.github/workflows/sdist.yml
+    with:
+      distribution-name: miniupnpc
+      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '2.3.3' }}
+
   upload:
     name: 🚀 Upload
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - sdist
     steps:
       - uses: actions/checkout@v7
 

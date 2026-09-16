@@ -1,6 +1,6 @@
-name: Upload wheels to S3
+name: Upload wheels and sdist to S3
 
-description: "Upload wheels to S3"
+description: "Upload wheels and the official PyPI sdist to S3"
 
 inputs:
   package_name:
@@ -31,6 +31,11 @@ runs:
         path: ./dist
         merge-multiple: true
 
+    - uses: actions/download-artifact@v8
+      with:
+        name: sdist
+        path: ./dist
+
     - uses: actions/upload-artifact@v7
       with:
         name: wheel
@@ -53,7 +58,7 @@ runs:
         role-to-assume: arn:aws:iam::${{ inputs.aws_account }}:role/${{ inputs.aws_role }}
         aws-region: us-west-2
 
-    - name: Upload wheels
+    - name: Upload wheels and sdist
       if: inputs.aws_account != ''
       shell: sh
       run: |

@@ -1,0 +1,41 @@
+name: "📦 sdist"
+
+on:
+  workflow_call:
+    inputs:
+      distribution-name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  sdist:
+    name: 📦 Source dist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download official PyPI sdist
+        run: |
+          set -euo pipefail
+          python3 -m pip download \
+            --index-url https://pypi.org/simple \
+            --no-deps \
+            --no-binary :all: \
+            --dest dist \
+            "${{ inputs.distribution-name }}==${{ inputs.version }}"
+          ls -la dist
+          if ls dist/*.whl >/dev/null 2>&1; then
+            echo "Expected only an sdist, found a wheel" >&2
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: ./dist
+          if-no-files-found: error
