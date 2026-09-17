@@ -28,7 +28,6 @@ defaults:
 env:
   default_version: "2.3.3"
   name: miniupnpc
-  pip_options: "--index-url https://pypi.chia.net/simple --extra-index-url https://pypi.org/simple"
 
 permissions:
   id-token: write
@@ -121,32 +120,45 @@ jobs:
         with:
           directories: ${{ steps.create-venv.outputs.activate-venv-directories }}
 
-      #      - name: Get source dist
-      #        run: |
-      #          pip download ${{ env.pip_options }} --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}
-
-      #      - name: Untar
-      #        run: |
-      #          tar -xvzf packages/${{ env.name }}-*
-      #          mv ${{ env.name }}-* source
-
       - uses: actions/checkout@v7
         with:
           path: buildwheels
 
+      - name: Resolve version
+        id: version
+        run: |
+          version="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || env.default_version }}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "git-ref=miniupnpc_${version//./_}" >> "$GITHUB_OUTPUT"
+
+      - name: Get source dist
+        if: matrix.os.matrix != 'windows'
+        run: |
+          pip download --index-url https://pypi.org/simple --no-deps --no-binary :all: --dest packages ${{ env.name }}==${{ steps.version.outputs.version }}
+
+      - name: Untar
+        if: matrix.os.matrix != 'windows'
+        run: |
+          tar -xvzf packages/${{ env.name }}-*
+          mv ${{ env.name }}-* source
+
+      # The sdist ships only the portable sources, so the mingw build inputs
+      # (wingenminiupnpcstrings.c, miniupnpc.def, miniupnpc.rc) are missing.
       - uses: actions/checkout@v7
+        if: matrix.os.matrix == 'windows'
         with:
           repository: miniupnp/miniupnp
-          ref: miniupnpc_2_3_3
+          ref: ${{ steps.version.outputs.git-ref }}
           path: cloned
 
       - name: Copy out miniupnpc
+        if: matrix.os.matrix == 'windows'
         run: |
           cp -RLv cloned/miniupnpc source
-          
+
           # Set our version of the Makefile with dlltools for gcc change
           rm source/Makefile.mingw
-          cp  buildwheels/Makefile.mingw source/Makefile.mingw
+          cp buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
         if: matrix.os.matrix != 'windows' && matrix.python.matrix == '3.10'
