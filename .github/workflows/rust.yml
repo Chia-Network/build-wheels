@@ -141,7 +141,6 @@ jobs:
 
   sdist:
     uses: ./.github/workflows/sdist.yml
-    continue-on-error: true
     with:
       distribution-name: ${{ inputs.distribution-name }}
       version: ${{ inputs.version }}
