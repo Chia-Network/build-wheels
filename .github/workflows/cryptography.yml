@@ -42,9 +42,6 @@ jobs:
       fail-fast: false
       matrix:
         abi:
-          - name: cp310-abi3
-            python: "3.12"
-            abi-feature: pyo3/abi3-py310
           - name: cp311-abi3
             python: "3.12"
             abi-feature: pyo3/abi3-py311
