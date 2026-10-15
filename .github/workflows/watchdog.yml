@@ -94,14 +94,13 @@ jobs:
 
       - name: Install tools
         run: |
-          pip install cibuildwheel==3.2.1
+          pip install cibuildwheel==4.3.1
 
       - name: Build and test
         env:
           CIBW_ARCHS_MACOS: ${{ matrix.os.cibw-archs-macos[matrix.arch.matrix] }}
           CIBW_BUILD: ${{ matrix.python.cibw-build }}
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
-          CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
         run: |
           cibuildwheel source --output-dir dist
