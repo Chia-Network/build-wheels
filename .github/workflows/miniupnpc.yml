@@ -68,10 +68,6 @@ jobs:
             runs-on:
               intel: [windows-latest]
         python:
-          - major-dot-minor: "3.10"
-            cibw-build: "cp310-*"
-            manylinux: manylinux_2_28
-            matrix: "3.10"
           - major-dot-minor: "3.11"
             cibw-build: "cp311-*"
             manylinux: manylinux_2_28
@@ -161,14 +157,9 @@ jobs:
           cp buildwheels/Makefile.mingw source/Makefile.mingw
 
       - name: Install tools
-        if: matrix.os.matrix != 'windows' && matrix.python.matrix == '3.10'
+        if: matrix.os.matrix != 'windows'
         run: |
-          pip install cibuildwheel==2.23.3
-
-      - name: Install tools
-        if: matrix.os.matrix != 'windows' && matrix.python.matrix != '3.10'
-        run: |
-          pip install cibuildwheel==3.2.1
+          pip install cibuildwheel==4.3.1
 
       - name: Build and test
         if: matrix.os.matrix != 'windows'
@@ -178,7 +169,6 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macosx-deployment-target[matrix.arch.matrix] }}
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.python.manylinux }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.python.manylinux }}
-          CIBW_PRERELEASE_PYTHONS: True
           CIBW_SKIP: "cp31?t-* *-manylinux_i686 *-win32 *-musllinux_*"
         run: |
           cibuildwheel source --output-dir dist
